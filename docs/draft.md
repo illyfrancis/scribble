@@ -12,7 +12,7 @@ This document is prepared for (??? Who is the target audience ???).
 
 ## Assumptions
 
-The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readyness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below, in verbatim, for the convenience of the reader.
+The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readyness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below in verbatim for the convenience of the reader.
 
 #### Assumptions from BRD
 
@@ -79,12 +79,12 @@ And the 'Static database' provides reference service with the following:
 
 For both UAF and 'Static database', it is assumed that:
 
-* the preceding capabilities are provided as callable/executable functions (NOT just some database tables containing these information that has to be queried by VUS)
-* the functions executes and performs according to a SLA and NFR where NFR is to be defined later
+* the preceding capabilities are provided as callable services (i.e. NOT just exposing database tables that has to be queried by VUS)
+* the functions from the services execute and perform according to a SLA and NFR where NFR is to be defined later
 
 #### Message types
 
-The assumption is that there is one message type to describe all VUS messages (1-7). However there may be an unforeseen situation where a single message type may not sufficiently support the business requirement or it may not be the most efficient use of the message. Under these circumstances the system may introduce an additional message types.
+The assumption is that there is one message type to describe all VUS messages (1-7). However there may be an unforeseen situation where a single message type may not sufficiently support the business requirement or there is potential for performance gain by defining multiple types. Under these circumstances the system may introduce an additional message types.
 
 #### Posting of Provisional Cash Transaction
 
