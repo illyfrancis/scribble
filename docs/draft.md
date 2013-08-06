@@ -4,7 +4,7 @@
 
 The purpose of this document is to provide high-level design for VUS system and to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `P6 ????` prepared by `??? author ???` that captures the business drivers and the detail description of the business requirements.
 
-The reader of this document should refer to the business requirements document to grasp the full business context for which the solution is designed.
+The reader of this document should refer to the business requirements document to grasp the full business context on which the solution design is based.
 
 ## Audience ???
 
@@ -12,7 +12,7 @@ This document is prepared for (??? Who is the target audience ???).
 
 ## Assumptions
 
-The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to external systems development and readyness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below, in verbatim, for the convenience of the reader.
+The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readyness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below, in verbatim, for the convenience of the reader.
 
 #### Assumptions from BRD
 
@@ -24,13 +24,11 @@ The high-level design is produced to fulfill the business requirements outlined 
 6.	The existing Withholding Agent indicator on an ActionWorld R/P will be part of the AW cash transaction data sent to the RTCR.
 7.	MFPS will have created a new FX Y/N indicator as part of the F/X Away process.
 
-In addition to aforementioned assumptions from the BRD, this document makes the the following design assumptions and observations.
+In addition to the assumptions from the BRD, this document makes the the following design assumptions and observations.
 
 #### Transaction information
 
 * The source of the transaction information is originated from RTCR and RTCR only.
-* It is also expected that RTCR (or its subsystem) establish a connection to VUS via message channel and place (publish or put) a transaction information in the form of a message on the message channel.
-* RTCR (or its subsystem) only directs 'cash-away' related transaction messages. Initially it will be for SEB only but it must allow for more than one 'cash-away' client.
 * Each transaction message sourced from RTCR must contain (in addtion to other transaction information):
     - Unique RTCR Id
     - Primary ***transaction identifier***, comprised of source type and transaction number
