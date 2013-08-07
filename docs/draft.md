@@ -39,7 +39,7 @@ In addition to the assumptions from the BRD, this document makes the the followi
 
 * The uniqueness of the transaction is determined by the combination of the source system type and the transaction number. For example a cash trade transaction record from RTCR can be uniquely identified by `SONIC 7890`.
 * Any transaction records within RTCR with the same transaction identifier (e.g. `SONIC 7890`) refer to the same underlying transaction.
-* All external systems will provide ***transaction identifier*** in the messages to VUS where the ***transaction identifier*** follows the same scheme as above. i.e. `Source system type + Transaction number`.
+* All external systems will provide ***transaction identifier*** in the messages to VUS where the ***transaction identifier*** follows the same scheme as above. i.e. ` Source system type + Transaction number `.
 
 #### RTCR
 
@@ -106,7 +106,7 @@ However, note that the high-level design should withstand minor requirement chan
 
 ## Design goal (?)
 
-Aside from the 
+Aside from the core functional requirements:
 
 * decouple
 * extensible
@@ -123,7 +123,7 @@ Aside from the
              \                                   /
       [RTCR]  --> (===() --> [ VUS ] --> (===() --> [SEB]
              /                  |                \
-     [FX Away]                  |                   [Informediary]
+     [FX Away]                  |                   [Infomediary]
            /              [UAF]   [SD]      
       [SEB]                
 
@@ -163,17 +163,27 @@ lastly, the **reference data** systems are:
 
 The integration with the **source** and the **destination** systems is assumed to be based on message queue solution. One of the main design concerns for system integration is to minimize tight coupling between systems and the message queue solution is proven to be a good candidate for this concern. In addition, the asynchronous nature of the message flows between the systems is well matched by the message queue solution.
 
-On the other hand, the **reference data** services require synchronous exchange for which RESTful web services approach is better suited than a message queue solution.
+On the other hand, the **reference data** services require synchronous data exchange for which RESTful web services approach is better suited than a message queue solution.
 
 The ` integration ` section below describes the integration approach for each external system in detail.
 
-## VUS Components
-* Core process design detail???
-    * use of framework
+## VUS Modules
+
+The VUS is broken up into five major modules and within each modules there are one or more components depending on its specific responsibility. 
+
+At the lowest level, the ` Integration ` module takes care of the connectivity concerns between the external systems and VUS and it encapsulates much of the underlying messaging details from the rest of the modules.
+
+For each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process such as message validation, transformation, log of input data and routing the data to ` VUS Core `.
+
+` VUS Core ` implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as necessary. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
+
+The outbound data is then forwarded to ` Router and Event Sink ` that routes and transforms the outbound data to a specific message format for intended destination. For certain destination, e.g. Infomediary, there is no requirement for message transformation. Any outbound data are also captured for reporting and audit purpose within this module.
+
+The operational concerns such as alerts, monitoring and the reports are captured in ` Operational Concerns `.
 
 ### 1. Integration
 
-The integration components are largely concerned with the definition of message types, message format and the communication and connectivity between applications. As an example, the connectivity in terms of EIP solution, it relates to message endpoints on which a system can use to send or receive data/messages.
+The integration module is largely concerned with the definition of message types, message format and the communication and connectivity between the external systems identified in the previous section and VUS. As an example, the connectivity in terms of EIP solution, it relates to message endpoints on which a system can use to send or receive data/messages.
 
 The purpose of the integration components (largely the responsibility of the message endpoints) are to encapsulate the concerns regarding the message formats, messaging channels or any of the other details of communicating with other applications via messaging.
 
@@ -208,7 +218,7 @@ The messages 'flow-in' from each source systems to VUS. As seen in the ` Externa
 
 The general responsibilities pointed out regarding the integration components apply to each source systems. That is, the design and the specification of message channels, queues/topics etc.
 
-The design does not dictate the implementation decisions. For example, the decision between having a separate queue defined per internal source systems vs. a single queue for all internal source systems will depend on a number of implementation concerns.
+The design does not dictate the implementation decisions. For example, the decision between having separate queues defined per internal source systems vs. a single queue for all internal source systems will depend on a number of implementation concerns.
 
 And the different aspects of implementation concerns need to be well thought out and compared. It is these types of concerns and consideration that the integration components for source systems are responsible for.
 
@@ -236,16 +246,25 @@ Assuming UAF and 'Static database' can provide the RESTful API, the scope of the
 
 ### 2. Event Source Adapters
 
-* content based routing (per client)
-* filter and transform
-* validation - and error handling
+As mentioned, for each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process such as data validation, log of input data and routing the data to ` VUS Core `.
+
+As soon as a message arrive at this component, the input message is stored for audit and reporting purpose. Then the adapter components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
+
+The event source adapter for RTCR messages (i.e. transactions) requires additional responsibility to filter the messages based on the message content such that it only dispatches the relevant transaction messages to the VUS Core module. The specific filter rules must be captured in a detailed design document but as an example:
+
+    Only process transactions that are either,
+      - non-provisional and has account number of type B or type C
+      or
+      - provisional and has account number of type A
+    All other cases, do not process.
+
 
 
 ### 3. Router and Event Sink
 
 ### 4. Reference data service
 
-As noted in the assumptions section, the reference data 'look up' service for dual accounts relationship is provided by UAF. Even though the underlying implementation detail of the functionality in UAF may be unknown at this stage and the approach for the integration (which is discussed in the next section) can be deferred, the main concern for the reference data service component is to fulfill, largely, the implementation of the following component interface.
+As noted in the assumptions section, the reference data 'look up' service for dual accounts relationship is provided by UAF. Even though the underlying implementation detail of the functionality in UAF may be unknown at this stage and the approach for the integration can be deferred, the main concern for the reference data service component is to fulfill, largely, the implementation of the following component interface.
 
     enum DualAccountType {
       TYPE_A, TYPE_B, TYPE_C;
@@ -274,7 +293,7 @@ Having the component interface delineates the underlying implementation concerns
 
 The main concerns of this component 'Reference data service' are:
 
-* to define the interface for the core component
+* to define the interface with the core component
 * implementation of the interface
 * make the implementation available to the core component
 
@@ -283,6 +302,36 @@ Additionally, the Reference data service could implement some level of 'caching'
 ### 4. VUS Core
 
 ???
+
+## Operational Concerns
+
+> General question on this stream is shouldn't this concern be handled consistently and possibly with one solution/system for all P6 projects? If every sub-projects implement its own UI and monitoring solution in a disparate manner, there will be no consistency in its functionality and operations, resulting in mixture of procedures for the operator.
+
+> Instead, if the operational concerns are addressed as a separate sub-project whereby it defines a standard approach on how the errors are reported and alerts are raised etc (along with audit and logs), the other sub-projects (like VUS) can conform to it but it need not implement its own UI for it. (and managing users etc)
+
+### Monitoring / Alerts
+* Need more detailed requirements
+* Defining alertable events
+    * Need to determine the criteria for raising alerts
+* Related to UI
+* From BRD,
+    * Have an alert process to generate a warning if VUS 4 or VUS 4 PROV have been sent but VUS 5 or VUS 5 PROV have not been received
+* Who to alert?
+* When to alert? - what is the condition?
+* How? Is it an UI?
+* How to set up?
+
+### Reporting (only in relation to VUS messages)
+* Identify the requirement and source system(s)
+
+### UI
+* Who are the users?
+* What are the requirements?
+* ACL requirements
+    * Role based?
+
+### Assume ?
+* Further analysis and detailed requirement will be provided in due course
 
 ## Development approach
 * map components to stream
@@ -300,22 +349,6 @@ Additionally, the Reference data service could implement some level of 'caching'
 ## NFR? concerns
 
 ***
-
-
-### UI Requirements
-* Who are the users?
-* Level of ACL to manage?
-
-#### Assume ?
-* Further analysis and detailed requirement will be provided in due course
-
-### Alert/Monitoring
-* From BRD,
-    * Have an alert process to generate a warning if VUS 4 or VUS 4 PROV have been sent but VUS 5 or VUS 5 PROV have not been received
-* Who to alert?
-* When to alert? - what is the condition?
-* How? Is it an UI?
-* How to set up?
 
 
 ## Resource dependencies
