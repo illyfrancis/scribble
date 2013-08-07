@@ -12,7 +12,7 @@ This document is prepared for (??? Who is the target audience ???).
 
 ## Assumptions
 
-The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readyness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below in verbatim for the convenience of the reader.
+The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readiness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below in verbatim for the convenience of the reader.
 
 #### Assumptions from BRD
 
@@ -29,13 +29,13 @@ In addition to the assumptions from the BRD, this document makes the the followi
 #### Transaction information
 
 * The source of the transaction information is originated from RTCR and RTCR only.
-* Each transaction message sourced from RTCR must contain (in addtion to other transaction information):
+* Each transaction message sourced from RTCR must contain (in addition to other transaction information):
     - Unique RTCR Id
     - Primary ***transaction identifier***, comprised of source type and transaction number
     - Associated ***transaction identifier*** (this is the other leg of transactions) ???
     - Related head account number (full 11 digits)
 
-#### Trasanction identifer
+#### Transaction identifier
 
 * The uniqueness of the transaction is determined by the combination of the source system type and the transaction number. For example a cash trade transaction record from RTCR can be uniquely identified by `SONIC 7890`.
 * Any transaction records within RTCR with the same transaction identifier (e.g. `SONIC 7890`) refer to the same underlying transaction.
@@ -49,7 +49,7 @@ Furthermore, the expectation is that RTCR (or its subsystem) only directs 'cash-
 
 #### FX Away
 
-FX Away is to produce two types of messages to VUS. One message is to indicate if a trasanction would require an FX and the other message type is for providing FX execution details for a transaction. 
+FX Away is to produce two types of messages to VUS. One message is to indicate if a transaction would require an FX and the other message type is for providing FX execution details for a transaction. 
 
 For both cases, the expectation is that each message to contain ***transaction identifier*** such that the information provided in the message can correlate to the transaction in consistent manner.
 
@@ -75,30 +75,30 @@ To summarize, UAF will provide 'Dual Account Service' that fulfills the followin
 And the 'Static database' provides reference service with the following:
 
 1. Given an account number and the transaction type (either RVP or DVP), the 'static database' can determine if it is contractual or actual
-2. Dervice a SEB FX Counterparty information (??? need to confirm what the input is???)
+2. Derive a SEB FX Counterparty information (??? need to confirm what the input is???)
 
 For both UAF and 'Static database', it is assumed that:
 
 * the preceding capabilities are provided as callable services (i.e. NOT just exposing database tables that has to be queried by VUS)
 * the functions from the services execute and perform according to a SLA and NFR where NFR is to be defined later
 
-#### Message types
+#### Message types & formats
 
 The assumption is that there is one message type to describe all VUS messages (1-7). However there may be an unforeseen situation where a single message type may not sufficiently support the business requirement or there is potential for performance gain by defining multiple types. Under these circumstances the system may introduce an additional message types.
+
+??? message format for VUS - xml? who should decide ???
 
 #### Posting of Provisional Cash Transaction
 
 As of `1 Aug ???`, the requirements relating to the treatment of 'provisional' messages are still under discussion within the business. When the details are confirmed and captured as concrete business requirements, the review of the high-level design presented in this document must take place to validate the current design and update as necessary.
 
-#### Caution
+#### General validity of the assumptions
 
-It is critical to note that the high-level design is based on the validity/correctness of the assumptions.
+It is critical to note that the high-level design is based on the validity / correctness of the assumptions.
 
-As at `???`, the BRD is still being finalized and as such any major changes or addendums to the requirements may impact the high-level design outlined in this document and may invalidate the fundamental design decisions.
+As at `???`, the BRD is still being finalized and as such any major changes or addendum to the requirements may impact the high-level design outlined in this document and may invalidate the fundamental design decisions.
 
 However, note that the high-level design should withstand minor requirement changes and it is the goal of the design to produce decoupled and modular system such that the impact of minor changes can be isolated and contained within a component.
-
-can be accomodated as the the affect should be isolated and contained within a single component.
 
 # High-level design
 
@@ -129,13 +129,16 @@ Aside from the
 
 * what else is in here???
 
+
+In the proceeding section
+
 ## External dependencies
 
 As stated in the `assumptions`, VUS depends on a number of external systems to obtain 'transaction' related messages. Along with the message processing, VUS requires reference data to further enrich the output message to a 'cash-away' client. 
 
 The service that provides reference data lookup is to be implemented by the underlying system that manages and maintains the reference data. In the case of 'accounts' related services, which are in the domain of UAF, it is UAF that assumes the role of a service provider. Similarly, the other 'static' look up services are in the domain of 'Static database' system.
 
-In a broad sense, the external systems can be categoried into the following three types.
+In a broad sense, the external systems can be categorized into the following three types.
 
 1. Source
 2. Destination
@@ -162,13 +165,74 @@ The integration with the **source** and the **destination** systems is assumed t
 
 On the other hand, the **reference data** services require synchronous exchange for which RESTful web services approach is better suited than a message queue solution.
 
-The `integration` section below describes the integration approach for each external system in detail.
+The ` integration ` section below describes the integration approach for each external system in detail.
 
 ## VUS Components
 * Core process design detail???
     * use of framework
 
-### 1. VUS Core
+### 1. Integration
+
+The integration components are largely concerned with the definition of message types, message format and the communication and connectivity between applications. As an example, the connectivity in terms of EIP solution, it relates to message endpoints on which a system can use to send or receive data/messages.
+
+The purpose of the integration components (largely the responsibility of the message endpoints) are to encapsulate the concerns regarding the message formats, messaging channels or any of the other details of communicating with other applications via messaging.
+
+In addition, the design and the specification of message channels, queues/topics and other messaging related concerns, such as durable messages, ack/nack, dead-letter queue etc, are part of the integration components responsibility. However the act of creating a queue in a specific message queue product such as WebSphere MQ, do not belong in this but rather it is the operational tasks that to be carried out by a specialized team.
+
+Furthermore, the integration components are also responsible for providing alternate integration options when necessary. For example, RESTful service based integration which would suit well for the use cases of connectivity between reference data systems and VUS as discussed below.
+
+#### Client (i.e. SEB)
+
+In terms of VUS messages, the interaction between the client (in the immediate case SEB) and the VUS can be categories as:
+
+1. Outbound messages from VUS to SEB
+2. Incoming messages from SEB to VUS
+
+In the context of message channels it is assumed that each categories of messages to have separate and its own message channels.
+
+At high-level, the integration component for the client deals with:
+
+* Defining the connectivity between VUS and the client
+* Design of reply/response (or Ack/Nack) paradigm
+* Consideration for durable messages and its implementation
+* Handling dead-letter queue
+
+#### Source systems
+
+The messages 'flow-in' from each source systems to VUS. As seen in the ` External dependencies ` the source systems identified are:
+
+* RTCR
+* FX Away
+* MFPS
+* Client (already covered in ` Client `)
+
+The general responsibilities pointed out regarding the integration components apply to each source systems. That is, the design and the specification of message channels, queues/topics etc.
+
+The design does not dictate the implementation decisions. For example, the decision between having a separate queue defined per internal source systems vs. a single queue for all internal source systems will depend on a number of implementation concerns.
+
+And the different aspects of implementation concerns need to be well thought out and compared. It is these types of concerns and consideration that the integration components for source systems are responsible for.
+
+#### Destination systems
+
+The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other is for the internal message consumption, in the current BRD, Infomediaray. The integration component for the clients is covered previously.
+
+As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance.
+
+#### Reference data
+
+Both UAF and the 'Static database' provide reference data to VUS. As noted, message queue solution for these are not well suited and therefore different integration options are explored and listed in the order of preference.
+
+1. RESTful API (preferred)
+2. Database ETL specific to VUS, replicate only necessary data
+3. Message (synchronous)
+
+When any of the above options cannot be met by the underlying service provider (i.e. UAF, 'static database') consider the following options but avoid as much as possible.
+
+1. Direct access to underlying data source
+2. JCA based solution*
+
+Assuming UAF and 'Static database' can provide the RESTful API, the scope of the integration component for the reference data would involve the design of message exchange format (e.g. JSON message) with the counterpart systems and the implementation of RESTful clients for the data exchange.
+
 
 ### 2. Event Source Adapters
 
@@ -181,7 +245,7 @@ The `integration` section below describes the integration approach for each exte
 
 ### 4. Reference data service
 
-As noted in the assumptions section, the reference data 'look up' service for dual accounts relationship is provided by UAF. Even though the underlying implementation detail of the functionality in UAF may be unknown at this stage and the approach for the integration (which is discussed in the next section) can be deffered, the main concern for the reference data service component is to fulfill, largely, the implementation of the following component interface.
+As noted in the assumptions section, the reference data 'look up' service for dual accounts relationship is provided by UAF. Even though the underlying implementation detail of the functionality in UAF may be unknown at this stage and the approach for the integration (which is discussed in the next section) can be deferred, the main concern for the reference data service component is to fulfill, largely, the implementation of the following component interface.
 
     enum DualAccountType {
       TYPE_A, TYPE_B, TYPE_C;
@@ -216,56 +280,9 @@ The main concerns of this component 'Reference data service' are:
 
 Additionally, the Reference data service could implement some level of 'caching' for performance improvement but as with any performance-optimization related activities, exercise caution to avoid premature optimization. Also any optimization exercise should be supported with well-thought out test cases to demonstrate the effect of optimization. More often than not, ill-conceived notion of optimization adds a little or no benefit for the complexity it may require.
 
-### 5. Integration
+### 4. VUS Core
 
-The intergration components are largely concerned with the definition of message types and the connectivity between systems. By connectivity, it does not refer to the physical connections or the network level connectivity but rather in conceptual term. As an example, the connectivity in terms of EIP solution, it would relate to message endpoints on which a system can use to send or receive data/messages.
-
-The purpose of the integration components (largely the responsibility of the message endpoints) are to encapsulate the concerns regarding the message formats, messaging channels etc.
-
-Extending it further, the design and the specification of message channels, queues/topics and other messaging related concerns, such as durable messages, ack/nack, dead-letter queue etc, are part of the integration components responsibility. However the act of creating a queue in a specific message queue product such as WebSphere MQ, do not belong in this but rather it is the operational tasks that to be carried out by a specialized team.
-
-In addition to the message queue solution, the integration components must provide alternate integration options when necessary. For example, a RESTful service would well suit the need of the integration between the reference data service and VUS as dicussed below.
-
-#### Client (i.e. SEB)
-
-In terms of VUS messages, the interaction between the client (in the immediate case SEB) and the VUS can be categories as:
-
-1. Outbound messages from VUS to SEB
-2. Incomming message from SEB to VUS
-
-In the context of message channels it is assumed that each categories of messages to have separate and its own message channels.
-
-At high-level, the integration component for the client deals with:
-
-* Defining the connectivity between VUS and the client
-* Design of reply/response (or Ack/Nack) paradigm
-* Consideration for durable messages and its implementation
-* Handling dead-letter queue
-
-#### Reference data
-
-Both UAF and the 'Static database' provide reference data to VUS. As noted, message queue solution for these are not well suited and therefore different integration options are explored and listed in the order of preference.
-
-1. RESTful API (preferred)
-2. Database ETL specific to VUS, replicate only necessary data
-3. Message (synchronous)
-
-When the above cannot be met by the underlying service provider (i.e. UAF or 'static database') consider the following options but avoid as much as possible.
-
-1. RPC provided by UAF
-2. direct access to underlying data source
-3. JCA
-
-Assuming UAF and 'Static database' can provide the RESTful API, the scope of the integration component for the reference data would involve the design of message exchange format (e.g. JSON message) with the counterpart systems and the implementation of RESTful clients for the data exchange.
-
-#### Source systems / incomming systems
-
-blah ???
-
-#### Destination systems
-
-blah ???
-
+???
 
 ## Development approach
 * map components to stream
@@ -283,8 +300,6 @@ blah ???
 ## NFR? concerns
 
 ***
-
-
 
 
 ### UI Requirements
