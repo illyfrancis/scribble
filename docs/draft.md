@@ -246,11 +246,11 @@ Assuming UAF and 'Static database' can provide the RESTful API, the scope of the
 
 ### 2. Event Source Adapters
 
-As mentioned, for each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process such as data validation, log of input data and routing the data to ` VUS Core `.
+As mentioned, for each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process and forward the data to ` VUS Core `.
 
 As soon as a message arrive at this component, the input message is stored for audit and reporting purpose. Then the adapter components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
 
-The event source adapter for RTCR messages (i.e. transactions) requires additional responsibility to filter the messages based on the message content such that it only dispatches the relevant transaction messages to the VUS Core module. The specific filter rules must be captured in a detailed design document but as an example:
+The event source adapter for RTCR messages (i.e. transactions) requires additional responsibility to filter the message based on the content such that it only dispatches the relevant transaction messages to the VUS Core module. The specific filter rules must be captured in a detailed design document but as an example:
 
     Only process transactions that are either,
       - non-provisional and has account number of type B or type C
@@ -258,9 +258,14 @@ The event source adapter for RTCR messages (i.e. transactions) requires addition
       - provisional and has account number of type A
     All other cases, do not process.
 
-
+Additionally, the components in this module may require to implement the routing capability for handling multiple clients. For example, if the assumption is that there are multiple instances of VUS Core where each instance is partitioned per client, the event source adapter would route the messages according to its client to the destined instance of VUS Core. 
 
 ### 3. Router and Event Sink
+
+After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format.
+
+Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message. The storage of the outbound message should expose enough meta-data so that it must be able to easily correlate it with corresponding inbound messages captured in ` Event Source Adapters `.
+
 
 ### 4. Reference data service
 
@@ -301,7 +306,35 @@ Additionally, the Reference data service could implement some level of 'caching'
 
 ### 4. VUS Core
 
+??? TODO
+
+` VUS Core ` implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as necessary. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
+
 ???
+
+Determine VUS Core process logic.
+
+#### Approach
+
+Further breakdown by messages
+* VUS 1, 2 or .. 7
+
+Or breakdown by type
+* Trade transactions
+* MF trade transactions
+* Corporate action transactions
+
+Capture design approach for each breakdown and success criteria?
+
+#### Core features
+* Core logic design from previous plus...
+* VUS Ref Id generation
+    * ensuring uniqueness, durable with re-start
+* Persistence and logs
+
+
+???
+
 
 ## Operational Concerns
 
