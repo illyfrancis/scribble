@@ -2,15 +2,9 @@
 
 ## Background
 
-The purpose of this document is to state the design assumptions and to provide high-level design for VUS system based on the assumptions. Also it aims to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `??? title` prepared by `??? author` that captures the business drivers and the detail description of the business requirements.
+The purpose of this document is to state the design assumptions and to provide high-level design for VUS system. Also it aims to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `??? title` prepared by `??? author` that captures the business drivers and the detail description of the business requirements.
 
 The reader of this document should refer to the business requirements document to grasp the full business context on which the high-level design is based.
-
-## Audience ???
-
-This document is prepared for (??? Who is the target audience ???).
-
-??? Do I need this section ???
 
 ## Assumptions
 
@@ -104,49 +98,46 @@ However, note that the high-level design should withstand minor requirement chan
 
 ## Scope ???
 
-Do I need to specify the scope? What's in and what's out?
+What's in and what's out?
 
 
 # High-level design
 
-???
+??? TODO ???
 
-## Design goal (?) - or call it design considerations?
+## Design considerations
 
-> Aside from the delivery of the core functional requirements, the design presented in this document is conceived with the consideration the following concerns.
+Aside from the primary goal of addressing the core functional requirements, the design presented in this document is conceived with the consideration of the following concerns.
 
-* decouple
-* extensible
+* decoupling
+* extensibility
     * client neutral solution
 * scalability (vertical and horizontal)
 * performance
 * reliability (fail-over, capacity etc)
 
-???
+??? expand ???
 
-## Basic flow / High-level diagram
+## Systems diagram
 
       [MFPS]                                        [XZY]
              \                                   /
       [RTCR]  --> (===() --> [ VUS ] --> (===() --> [SEB]
              /                  |                \
      [FX Away]                  |                   [Infomediary]
-           /              [UAF]   [SD]      
+           /             [UAF]--+--[Static DB]      
       [SEB]                
     
 
       (===() denotes message channel
 
-* what else is in here???
-
-
-In the proceeding section
+??? TODO - draw in Visio ???
 
 ## External dependencies
 
 As stated in the `assumptions`, VUS depends on a number of external systems to obtain 'transaction' related messages. Along with the message processing, VUS requires reference data to further enrich the output message to a 'cash-away' client. 
 
-The service that provides reference data lookup is to be implemented by the underlying system that manages and maintains the reference data. In the case of 'accounts' related services, which are in the domain of UAF, it is UAF that assumes the role of a service provider. Similarly, the other 'static' look up services are in the domain of 'Static database' system.
+The service that provides reference data lookup is to be implemented by the underlying system that manages and maintains the reference data. In the case of 'accounts' related services, which are in the domain of UAF, it is UAF that assumes the role of a service provider. Similarly, the other 'static' look up services is in the domain of 'Static database' system.
 
 In a broad sense, the external systems can be categorized into the following three types.
 
@@ -191,7 +182,7 @@ The ` integration ` section below describes the integration approach for each ex
     
     (*)- denotes the message endpoints
 
-The VUS is broken up into five major modules and within each modules there are one or more components depending on its specific responsibility. 
+The VUS is broken up into five major modules and within each modules there are one or more components depending on the module's specific responsibility. 
 
 At the lowest level, the ` Integration ` module takes care of the connectivity concerns between the external systems and VUS and it encapsulates much of the underlying messaging details from the rest of the modules.
 
@@ -205,7 +196,7 @@ The operational concerns such as alerts, monitoring and the reports are captured
 
 ### 1. Integration
 
-The integration module is largely concerned with the definition of message types, message format and the communication and connectivity between the external systems identified in the previous section and VUS. As an example, the connectivity in terms of EIP solution, it relates to message endpoints on which a system can use to send or receive data/messages.
+The integration module is largely concerned with the definition of message types, message format and the communication and connectivity between the external systems identified in the previous section and VUS. As an example, the connectivity in terms of EIP (Enterprise Integration Patterns), it relates to message endpoints on which a system can use to send or receive data/messages.
 
 The purpose of the integration components (largely the responsibility of the message endpoints) are to encapsulate the concerns regarding the message formats, messaging channels or any of the other details of communicating with other applications via messaging.
 
@@ -220,7 +211,7 @@ In terms of VUS messages, the interaction between the client (in the immediate c
 1. Outbound messages from VUS to SEB
 2. Incoming messages from SEB to VUS
 
-In the context of message channels it is assumed that each categories of messages to have separate and its own message channels.
+In the context of message channels it is assumed that each category of messages to have its own message channels.
 
 At high-level, the integration component for the client deals with:
 
@@ -246,19 +237,19 @@ And the different aspects of implementation concerns need to be well thought out
 
 #### Destination systems
 
-The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other is for the internal message consumption, in the current BRD, Infomediary. The integration component for the clients is covered previously.
+The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other for the internal message consumption, in the current BRD, Infomediary. The integration component for the clients is covered previously.
 
-As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance. [ ??? expand ???]
+As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance. [ ??? expand ???] For example, reliable messageing. ...... 
 
 #### Reference data
 
-Both UAF and the 'Static database' provide reference data to VUS. As noted, message queue solution for these are not well suited and therefore different integration options are explored and listed in the order of preference.
+Both UAF and the 'Static database' provide reference data to VUS. As noted, message queue solution for these is not well suited and therefore different integration options are explored and listed in the order of preference.
 
 1. RESTful API (preferred)
 2. Database ETL specific to VUS, replicate only necessary data
 3. Message (synchronous)
 
-When any of the above options cannot be met by the underlying service provider (i.e. UAF, 'static database') consider the following options but avoid as much as possible.
+When any of the above options cannot be met by the underlying service provider (i.e. UAF, 'static database') the following options can be explored but avoid as much as possible.
 
 1. Direct access to underlying data source
 2. JCA based solution*
@@ -270,7 +261,7 @@ Assuming UAF and 'Static database' can provide the RESTful API, the scope of the
 
 As mentioned, for each source system there is corresponding component in ` Event Source ` that perform preliminary business process and forward the data to ` VUS Core `.
 
-As soon as a message arrive at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
+As soon as a message arrives at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
 
 The event source components for RTCR messages (i.e. transactions) require an additional responsibility to filter the messages based on its content such that it only the relevant transaction messages are dispatched to the VUS Core module. The specific filter rules must be captured in a detail design document but as an example:
 
@@ -286,9 +277,9 @@ Additionally, the components in this module may require to implement the routing
 
 After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format. However it does not transform the messages into a wire format that is specific to the messaging solution - it is the responsibility of the ` Integration ` components.
 
-Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message. 
+Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message in a query data store. 
 
-The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented databases are well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that these 'query' data sources are not intended to be used by the core processing. There is no dependencies on the 'query' databases from the core module.
+The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented databases, are well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that the query data store is not intended to be used by the core module for message processing.
 
 ### 4. Reference data service
 
@@ -331,15 +322,15 @@ Additionally, the Reference data service could implement some level of 'caching'
 
 It implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as defined by the business requirements. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
 
-One of the key responsibility is the maintenance of the state-transition for each transactions by the input events whereby the core component examines the input event in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or FSM) for each unique transactions.
+One of the key responsibilities is the maintenance of the state-transition for each transaction by the input events whereby the core component examines the input event in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or FSM - Finite State Machine) for each unique transaction.
 
 There are various approaches for implementing a FSM. At one end of the spectrum, it can be implemented in the database by storing the current state against the transaction records and query the State/Event table that defines the state-transitions.
 
-An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for a complex state-transition logic and any enhancements or changes to the state-transition may require database re-modeling. Also there is potential throughput issue with processing of an input event as each event processing it requires multiple database queries to determine the next state.
+An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for complex state-transition logic and any enhancements or changes to the state-transition may require database re-modeling. Also there is potential throughput issue with processing of an input event as each event processing it requires multiple database queries to determine the next state.
 
 In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table, yielding more maintainable application.
 
-Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores).
+Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores ??? Leave in ???).
 
 ??? key items
 
