@@ -182,7 +182,7 @@ The ` integration ` section below describes the integration approach for each ex
     
     (*)- denotes the message endpoints
 
-The VUS is broken up into five major modules and within each modules there are one or more components depending on the module's specific responsibility. 
+The VUS is broken up into five major modules and within each modules there are one or more components depending on the module's specific responsibility. A module in this context refers to a deployable unit and can be thought of as a JAR file in Java application development.
 
 At the lowest level, the ` Integration ` module takes care of the connectivity concerns between the external systems and VUS and it encapsulates much of the underlying messaging details from the rest of the modules.
 
@@ -263,7 +263,7 @@ As mentioned, for each source system there is corresponding component in ` Event
 
 As soon as a message arrives at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
 
-The event source components for RTCR messages (i.e. transactions) require an additional responsibility to filter the messages based on its content such that it only the relevant transaction messages are dispatched to the VUS Core module. The specific filter rules must be captured in a detail design document but as an example:
+The event source components for RTCR messages (i.e. transactions) require an additional responsibility to filter the messages based on its content such that only the relevant transaction messages are dispatched to the VUS Core module. The specific filter rules must be captured in a detail design document but as an example:
 
     Only process transactions that are either,
       - non-provisional and has account number of type B or type C
@@ -332,6 +332,11 @@ In contrast, in-memory model better manages the throughput concerns as it reduce
 
 Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores ??? Leave in ???).
 
+
+??? TODO  - do not read below this line, work in progress ???
+
+***
+
 ??? key items
 
 * VUS Ref Id generation
@@ -388,8 +393,6 @@ Capture design approach for each breakdown and success criteria?
 ## Development approach
 * map components to stream
 
-## Deployment diagram - ??? (defer)
-
 ## Tool selections - ???
 * Java version 6 or 7
 * Actor model
@@ -399,9 +402,6 @@ Capture design approach for each breakdown and success criteria?
 ## HW requirements (defer)
 
 ## NFR? concerns
-
-***
-
 
 ## Resource dependencies
 * Availability of MQ resources
