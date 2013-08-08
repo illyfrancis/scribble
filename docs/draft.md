@@ -2,13 +2,15 @@
 
 ## Background
 
-The purpose of this document is to provide high-level design for VUS system and to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `P6 ????` prepared by `??? author ???` that captures the business drivers and the detail description of the business requirements.
+The purpose of this document is to state the design assumptions and to provide high-level design for VUS system and also to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `P6 ????` prepared by `??? author ???` that captures the business drivers and the detail description of the business requirements.
 
-The reader of this document should refer to the business requirements document to grasp the full business context on which the solution design is based.
+The reader of this document should refer to the business requirements document to grasp the full business context on which the high-level design is based.
 
 ## Audience ???
 
 This document is prepared for (??? Who is the target audience ???).
+
+??? Do I need this section ???
 
 ## Assumptions
 
@@ -86,7 +88,7 @@ For both UAF and 'Static database', it is assumed that:
 
 The assumption is that there is one message type to describe all VUS messages (1-7). However there may be an unforeseen situation where a single message type may not sufficiently support the business requirement or there is potential for performance gain by defining multiple types. Under these circumstances the system may introduce an additional message types.
 
-??? message format for VUS - xml? who should decide ???
+??? message format for VUS - XML? who should decide ???
 
 #### Posting of Provisional Cash Transaction
 
@@ -99,6 +101,11 @@ It is critical to note that the high-level design is based on the validity / cor
 As at `???`, the BRD is still being finalized and as such any major changes or addendum to the requirements may impact the high-level design outlined in this document and may invalidate the fundamental design decisions.
 
 However, note that the high-level design should withstand minor requirement changes and it is the goal of the design to produce decoupled and modular system such that the impact of minor changes can be isolated and contained within a component.
+
+## Scope ???
+
+Do I need to specify the scope? What's in and what's out?
+
 
 # High-level design
 
@@ -126,6 +133,9 @@ Aside from the core functional requirements:
      [FX Away]                  |                   [Infomediary]
            /              [UAF]   [SD]      
       [SEB]                
+    
+
+      (===() denotes message channel
 
 * what else is in here???
 
@@ -167,17 +177,29 @@ On the other hand, the **reference data** services require synchronous data exch
 
 The ` integration ` section below describes the integration approach for each external system in detail.
 
-## VUS Modules
+## VUS modules
+
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
 
 The VUS is broken up into five major modules and within each modules there are one or more components depending on its specific responsibility. 
 
 At the lowest level, the ` Integration ` module takes care of the connectivity concerns between the external systems and VUS and it encapsulates much of the underlying messaging details from the rest of the modules.
 
-For each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process such as message validation, transformation, log of input data and routing the data to ` VUS Core `.
+For each source system there is corresponding component in ` Event Source ` that performs preliminary business process such as message validation, transformation, log of input data and dispatching the data to ` VUS Core `.
 
 ` VUS Core ` implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as necessary. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
 
-The outbound data is then forwarded to ` Router and Event Sink ` that routes and transforms the outbound data to a specific message format for intended destination. For certain destination, e.g. Infomediary, there is no requirement for message transformation. Any outbound data are also captured for reporting and audit purpose within this module.
+The outbound data is then forwarded to ` Event Sink ` that routes and transforms the outbound data to a specific message format for intended destination. For certain destination, e.g. Infomediary, there is no requirement for message transformation. Any outbound data are also captured for reporting and audit purpose within this module.
 
 The operational concerns such as alerts, monitoring and the reports are captured in ` Operational Concerns `.
 
@@ -224,9 +246,9 @@ And the different aspects of implementation concerns need to be well thought out
 
 #### Destination systems
 
-The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other is for the internal message consumption, in the current BRD, Infomediaray. The integration component for the clients is covered previously.
+The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other is for the internal message consumption, in the current BRD, Infomediary. The integration component for the clients is covered previously.
 
-As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance.
+As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance. [ ??? expand ???]
 
 #### Reference data
 
@@ -244,13 +266,13 @@ When any of the above options cannot be met by the underlying service provider (
 Assuming UAF and 'Static database' can provide the RESTful API, the scope of the integration component for the reference data would involve the design of message exchange format (e.g. JSON message) with the counterpart systems and the implementation of RESTful clients for the data exchange.
 
 
-### 2. Event Source Adapters
+### 2. Event Source
 
-As mentioned, for each source systems there are corresponding ` Event Source Adapters ` that perform preliminary business process and forward the data to ` VUS Core `.
+As mentioned, for each source system there is corresponding component in ` Event Source ` that perform preliminary business process and forward the data to ` VUS Core `.
 
-As soon as a message arrive at this component, the input message is stored for audit and reporting purpose. Then the adapter components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
+As soon as a message arrive at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
 
-The event source adapter for RTCR messages (i.e. transactions) requires additional responsibility to filter the message based on the content such that it only dispatches the relevant transaction messages to the VUS Core module. The specific filter rules must be captured in a detailed design document but as an example:
+The event source components for RTCR messages (i.e. transactions) require an additional responsibility to filter the messages based on its content such that it only the relevant transaction messages are dispatched to the VUS Core module. The specific filter rules must be captured in a detail design document but as an example:
 
     Only process transactions that are either,
       - non-provisional and has account number of type B or type C
@@ -258,14 +280,15 @@ The event source adapter for RTCR messages (i.e. transactions) requires addition
       - provisional and has account number of type A
     All other cases, do not process.
 
-Additionally, the components in this module may require to implement the routing capability for handling multiple clients. For example, if the assumption is that there are multiple instances of VUS Core where each instance is partitioned per client, the event source adapter would route the messages according to its client to the destined instance of VUS Core. 
+Additionally, the components in this module may require to implement the routing capability for handling multiple clients. For example, if the assumption is that there are multiple instances of VUS Core where each instance is partitioned per client, the event source component would route the messages according to its client to the destined instance of VUS Core. 
 
-### 3. Router and Event Sink
+### 3. Event Sink
 
-After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format.
+After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format. However it does not transform the messages into a wire format that is specific to the messaging solution - it is the responsibility of the ` Integration ` components.
 
-Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message. The storage of the outbound message should expose enough meta-data so that it must be able to easily correlate it with corresponding inbound messages captured in ` Event Source Adapters `.
+Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message. 
 
+The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented databases are well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that these 'query' data sources are not intended to be used by the core processing. There is no dependencies on the 'query' databases from the core module.
 
 ### 4. Reference data service
 
@@ -294,25 +317,36 @@ And for the 'static database', the component interface would resemble the follow
       String fxCounterPartyForSEB(???);
     }
 
-Having the component interface delineates the underlying implementation concerns tied to the external data sources from the core processing component. Through the interface design the overall solution can avoid tight coupling between multiple systems. Also the core component does not concern itself with the specific implementation detail of the reference data source but only depends on the interface. 
+The component interface design delineates the underlying implementation concerns relating to the external data sources from the core module. Through the interface design the overall solution can avoid tight coupling between multiple systems. Also the core component does not concern itself with the specific implementation detail of the reference data source but only depends on the interface. 
 
 The main concerns of this component 'Reference data service' are:
 
-* to define the interface with the core component
+* definition of the interface with the core component
 * implementation of the interface
 * make the implementation available to the core component
 
-Additionally, the Reference data service could implement some level of 'caching' for performance improvement but as with any performance-optimization related activities, exercise caution to avoid premature optimization. Also any optimization exercise should be supported with well-thought out test cases to demonstrate the effect of optimization. More often than not, ill-conceived notion of optimization adds a little or no benefit for the complexity it may require.
+Additionally, the Reference data service could implement some level of 'caching' for performance improvement but as with any performance-optimization related activities, exercise caution to avoid premature optimization. Also any optimization exercise should be supported with well-thought out test cases to demonstrate the effect of optimization. More often than not, ill-conceived notion of optimization adds a little or no benefit for the complexity it may introduce.
 
 ### 4. VUS Core
 
-??? TODO
+It implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as defined by the business requirements. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
 
-` VUS Core ` implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as necessary. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
+One of the key responsibility is the maintenance of the state-transition for each transactions by the input events whereby the core component examines the input event in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or FSM) for each unique transactions.
 
-???
+There are various approaches for implementing a FSM. At one end of the spectrum, it can be implemented in the database by storing the current state against the transaction records and query the State/Event table that defines the state-transitions.
 
-Determine VUS Core process logic.
+An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for a complex state-transition logic and any enhancements or changes to the state-transition may require database re-modeling. Also there is potential throughput issue with processing of an input event as each event processing it requires multiple database queries to determine the next state.
+
+In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table.
+
+Naturally, a hybrid of the two is ideal....
+
+??? key items
+
+* VUS Ref Id generation
+    * ensuring uniqueness, durable with re-start
+* Persistence and logs
+
 
 #### Approach
 
@@ -325,12 +359,6 @@ Or breakdown by type
 * Corporate action transactions
 
 Capture design approach for each breakdown and success criteria?
-
-#### Core features
-* Core logic design from previous plus...
-* VUS Ref Id generation
-    * ensuring uniqueness, durable with re-start
-* Persistence and logs
 
 
 ???
