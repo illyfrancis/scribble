@@ -111,16 +111,16 @@ Do I need to specify the scope? What's in and what's out?
 
 ???
 
-## Design goal (?)
+## Design goal (?) - or call it design considerations?
 
-Aside from the core functional requirements:
+> Aside from the delivery of the core functional requirements, the design presented in this document is conceived with the consideration the following concerns.
 
 * decouple
 * extensible
     * client neutral solution
-* scalable
+* scalability (vertical and horizontal)
 * performance
-* reliability
+* reliability (fail-over, capacity etc)
 
 ???
 
@@ -339,7 +339,7 @@ An advantage with this approach is the durable nature of the database when compa
 
 In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table.
 
-Naturally, a hybrid of the two is ideal....
+Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores).
 
 ??? key items
 
