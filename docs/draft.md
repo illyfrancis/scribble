@@ -2,7 +2,7 @@
 
 ## Background
 
-The purpose of this document is to state the design assumptions and to provide high-level design for VUS system and also to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `P6 ????` prepared by `??? author ???` that captures the business drivers and the detail description of the business requirements.
+The purpose of this document is to state the design assumptions and to provide high-level design for VUS system based on the assumptions. Also it aims to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `??? title` prepared by `??? author` that captures the business drivers and the detail description of the business requirements.
 
 The reader of this document should refer to the business requirements document to grasp the full business context on which the high-level design is based.
 
@@ -337,7 +337,7 @@ There are various approaches for implementing a FSM. At one end of the spectrum,
 
 An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for a complex state-transition logic and any enhancements or changes to the state-transition may require database re-modeling. Also there is potential throughput issue with processing of an input event as each event processing it requires multiple database queries to determine the next state.
 
-In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table.
+In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table, yielding more maintainable application.
 
 Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores).
 
