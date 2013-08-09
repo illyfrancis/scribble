@@ -402,7 +402,7 @@ Regardless of the implementation choice for state managements, the detail design
 
 #### Domain model
 
-The main design of VUS Core is based on the assumption that each message is related to a specific ***transaction identifier*** as noted in ` Assumptions `. And there are different types of messages or entities that are related by the ***transaction identifier***.
+The main design of VUS Core is based on the assumption that each message is related to a specific ***transaction identifier*** as noted in ` Assumptions `. And the different types of messages (or entities) are related by the ***transaction identifier***.
 
 This ***transaction identifier*** centric view implies that:
 
