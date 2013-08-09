@@ -8,7 +8,7 @@ The reader of this document should refer to the business requirements document t
 
 ## Assumptions
 
-The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readiness of those systems. The details are captured in the BRD under the section `Assumptions` and it is reproduced below in verbatim for the convenience of the reader.
+The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readiness of those systems. The details are captured in the BRD under the section ` Assumptions ` and it is reproduced below in verbatim for the convenience of the reader.
 
 #### Assumptions from BRD
 
@@ -20,7 +20,7 @@ The high-level design is produced to fulfill the business requirements outlined 
 6.	The existing Withholding Agent indicator on an ActionWorld R/P will be part of the AW cash transaction data sent to the RTCR.
 7.	MFPS will have created a new FX Y/N indicator as part of the F/X Away process.
 
-In addition to the assumptions from the BRD, this document makes the the following design assumptions and observations.
+In addition to the assumptions from the BRD, this document makes the following design assumptions and observations.
 
 #### Transaction information
 
@@ -39,7 +39,7 @@ In addition to the assumptions from the BRD, this document makes the the followi
 
 #### RTCR
 
-As briefly noted, VUS expects the transaction information to flow from RTCR. It is expected that RTCR (or its subsystem) establish a connection to VUS via message channel and place or publish a transaction information in the form of a message on the message channel.
+As briefly noted, VUS expects the transaction information to flow from RTCR. It is expected that RTCR (or its subsystem) establish a connection to VUS via message channel and place or publish transaction information in the form of a message on the message channel.
 
 Furthermore, the expectation is that RTCR (or its subsystem) only directs 'cash-away' related transaction messages. Initially it will be for SEB only but it must allow for more than one 'cash-away' client.
 
@@ -53,7 +53,7 @@ For both cases, the expectation is that each message to contain ***transaction i
 
 As per FX Away, any additional information relating to a transaction provided by MFPS will contain ***transaction identifier***. 
 
-There are two scenarios where MFPS sends messages to VUS, one for providing FX requirement for a transaction and the other to supply information relating to fees for a transaction. In either cases, VUS expects consistent treatment of the ***transaction identifier***.
+There are two scenarios where MFPS sends messages to VUS, one for providing FX requirement for a transaction and the other to supply information relating to fees for a transaction. In either case, VUS expects consistent treatment of the ***transaction identifier***.
 
 #### Reference data
 
@@ -71,7 +71,7 @@ To summarize, UAF will provide 'Dual Account Service' that fulfills the followin
 And the 'Static database' provides reference service with the following:
 
 1. Given an account number and the transaction type (either RVP or DVP), the 'static database' can determine if it is contractual or actual
-2. Derive a SEB FX Counterparty information (??? need to confirm what the input is???)
+2. Derive SEB FX Counterparty information (??? need to confirm what the input is???)
 
 For both UAF and 'Static database', it is assumed that:
 
@@ -182,7 +182,7 @@ The ` integration ` section below describes the integration approach for each ex
     
     (*)- denotes the message endpoints
 
-The VUS is broken up into five major modules and within each modules there are one or more components depending on the module's specific responsibility. A module in this context refers to a deployable unit and can be thought of as a JAR file in Java application development.
+The VUS is broken up into five major modules and within each module there are one or more components depending on the module's specific responsibility. A module in this context refers to a deployable unit and can be thought of as a JAR file in Java application development.
 
 At the lowest level, the ` Integration ` module takes care of the connectivity concerns between the external systems and VUS and it encapsulates much of the underlying messaging details from the rest of the modules.
 
@@ -259,7 +259,7 @@ Assuming UAF and 'Static database' can provide the RESTful API, the scope of the
 
 ### 2. Event Source
 
-As mentioned, for each source system there is corresponding component in ` Event Source ` that perform preliminary business process and forward the data to ` VUS Core `.
+As mentioned, for each source system there is corresponding component in ` Event Source ` that performs preliminary business process and forwards the data to ` VUS Core `.
 
 As soon as a message arrives at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
 
@@ -277,9 +277,9 @@ Additionally, the components in this module may require to implement the routing
 
 After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format. However it does not transform the messages into a wire format that is specific to the messaging solution - it is the responsibility of the ` Integration ` components.
 
-Prior to the message being forwarded to an endpoints defined in the ` Integration ` module, the components also persist the outbound message in a query data store. 
+Prior to the message being forwarded to endpoints defined in the ` Integration ` module, the components also store the outbound message in a query data store. 
 
-The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented databases, are well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that the query data store is not intended to be used by the core module for message processing.
+The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented database is well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that the query data store is not intended to be used by the core module for message processing.
 
 ### 4. Reference data service
 
