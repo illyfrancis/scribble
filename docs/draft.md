@@ -10,7 +10,7 @@ The reader of this document should refer to the business requirements document t
 
 The high-level design is produced to fulfill the business requirements outlined in the BRD. Along with the requirements the BRD states a number of assumptions with regards to the external systems development and readiness of those systems. The details are captured in the BRD under the section ` Assumptions ` and it is reproduced below in verbatim for the convenience of the reader.
 
-#### Assumptions from BRD
+### Assumptions from BRD
 
 1.	Asia Blueprint Phase 1A and 1B will be in production and all of the upstream processing applications, except Mutual Funds, will pass cash data through CTA to a Real Time Cash Repository (RTCR).  Mutual Funds cash data flows into the RTCR via GTPS, GFTS or Tiger depending on the transaction.
 2.	Spectrum will have replaced FX Legacy for Foreign Exchange processing.
@@ -19,6 +19,8 @@ The high-level design is produced to fulfill the business requirements outlined 
 5.	The existing FX Y/N indicator on an ActionWorld R/P will be part of the AW cash transaction data sent to the RTCR.
 6.	The existing Withholding Agent indicator on an ActionWorld R/P will be part of the AW cash transaction data sent to the RTCR.
 7.	MFPS will have created a new FX Y/N indicator as part of the F/X Away process.
+
+### Design Assumptions
 
 In addition to the assumptions from the BRD, this document makes the following design assumptions and observations.
 
@@ -88,7 +90,7 @@ The assumption is that there is one message type to describe all VUS messages (1
 
 As of `1 Aug ???`, the requirements relating to the treatment of 'provisional' messages are still under discussion within the business. When the details are confirmed and captured as concrete business requirements, the review of the high-level design presented in this document must take place to validate the current design and update as necessary.
 
-#### General validity of the assumptions
+### General validity of the assumptions
 
 It is critical to note that the high-level design is based on the validity / correctness of the assumptions.
 
@@ -196,6 +198,18 @@ The operational concerns such as alerts, monitoring and the reports are captured
 
 ### 1. Integration
 
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
+
 The integration module is largely concerned with the definition of message types, message format and the communication and connectivity between the external systems identified in the previous section and VUS. As an example, the connectivity in terms of EIP (Enterprise Integration Patterns), it relates to message endpoints on which a system can use to send or receive data/messages.
 
 The purpose of the integration components (largely the responsibility of the message endpoints) are to encapsulate the concerns regarding the message formats, messaging channels or any of the other details of communicating with other applications via messaging.
@@ -239,7 +253,7 @@ And the different aspects of implementation concerns need to be well thought out
 
 The messages 'flow-out' from VUS to destinations. There are two type of destination, first is for the clients and the other for the internal message consumption, in the current BRD, Infomediary. The integration component for the clients is covered previously.
 
-As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer in this instance. [ ??? expand ???] For example, reliable messageing. ...... 
+As with other integration components, the same concerns and responsibilities pointed out so far also applies to these. In addition, further responsibility must be considered because of the additional role that VUS is performing as a message producer. For example the determination of reliable messaging requirements and its implementation detail forms a part of the responsibility of this components.
 
 #### Reference data
 
@@ -259,6 +273,18 @@ Assuming UAF and 'Static database' can provide the RESTful API, the scope of the
 
 ### 2. Event Source
 
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
+
 As mentioned, for each source system there is corresponding component in ` Event Source ` that performs preliminary business process and forwards the data to ` VUS Core `.
 
 As soon as a message arrives at this component, the input message is persisted for audit and reporting purpose. Then the event source components validate the input message and transform it into a format that is suitable for VUS Core module's consumption. Management of the validation failures is also the responsibility of this module. A general approach is to direct the failed message to a separate queue for further assessment and reports.
@@ -275,6 +301,18 @@ Additionally, the components in this module may require to implement the routing
 
 ### 3. Event Sink
 
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
+
 After the ` VUS Core ` produces the outbound data it is routed to an ` Event Sink ` according to message type and/or client. The role of the components in this module is to translate the outbound data to a predefined format. For example, a message in an object form may be transformed into an XML document or JSON format. However it does not transform the messages into a wire format that is specific to the messaging solution - it is the responsibility of the ` Integration ` components.
 
 Prior to the message being forwarded to endpoints defined in the ` Integration ` module, the components also store the outbound message in a query data store. 
@@ -282,6 +320,18 @@ Prior to the message being forwarded to endpoints defined in the ` Integration `
 The storage of the outbound message should capture relevant meta-data so that it can be easily correlated with the corresponding inbound messages captured by ` Event Source `. Document-oriented database is well suited for this use case in that the messages can be expressed in the form of schema-less documents. Also it is important to note that the query data store is not intended to be used by the core module for message processing.
 
 ### 4. Reference data service
+
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
 
 As noted in the assumptions section, the reference data 'look up' service for dual accounts relationship is provided by UAF. Even though the underlying implementation detail of the functionality in UAF may be unknown at this stage and the approach for the integration can be deferred, the main concern for the reference data service component is to fulfill, largely, the implementation of the following component interface.
 
@@ -320,18 +370,93 @@ Additionally, the Reference data service could implement some level of 'caching'
 
 ### 4. VUS Core
 
-It implements the main business logic according to the BRD. It is within this module that the input data is consumed and the outbound data is created as defined by the business requirements. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
+              +--------------------------VUS-------------------------+
+              |                                                      |
+    source -->+--[(*) Event Source]---[VUS Core]---[Event Sink (*)]--+--> destination
+              |                            |                         |
+              |                [Reference data service (*)]          |
+              |                                         |            |
+              +-----------------------------------------+------------+
+                                                        |
+                                                 reference data
+    
+    (*)- denotes the message endpoints
 
-One of the key responsibilities is the maintenance of the state-transition for each transaction by the input events whereby the core component examines the input event in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or FSM - Finite State Machine) for each unique transaction.
+VUS Core implements the main business logic according to the BRD. It is within this module that the input data provided by the ` Event Source ` is consumed and creates the outbound data as defined by the business requirements then routed to ` Event Sink `. The core module interacts with the ` Reference data service ` to enrich the outbound data when needed.
+
+#### Managing state
+
+One of the key responsibilities is the maintenance of the state-transition for each transaction by the input events whereby the core component examines the input data in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or finite state machine - FSM) for each unique transaction.
 
 There are various approaches for implementing a FSM. At one end of the spectrum, it can be implemented in the database by storing the current state against the transaction records and query the State/Event table that defines the state-transitions.
 
-An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for complex state-transition logic and any enhancements or changes to the state-transition may require database re-modeling. Also there is potential throughput issue with processing of an input event as each event processing it requires multiple database queries to determine the next state.
+An advantage with this approach is the durable nature of the database when compared to the states held in-memory, in that the state information is not lost in the event of system failure. However the modeling of the State/Event table becomes non-trivial for complex state-transition logic and any enhancements or changes to the state-transition may require database remodeling. Also there is potential throughput issue with the processing of input events as each event processing requires multiple database queries to determine the next state.
 
 In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table, yielding more maintainable application.
 
-Ideal middle ground is the hybrid of the two approaches where the solution maintains the state in persistent store with higher throughput without consuming too much memory (whilst take advantage of the multiple CPUs / multi-cores ??? Leave in ???).
+An ideal middle ground is the hybrid of the two approaches where the solution maintains the states in persistent store with higher throughput without consuming too much memory whilst take advantage of the multiple CPUs / multi-cores that the modern hardware architecture commonly provide.
 
+Another way to think about the state management problem is by considering ` Event Sourcing ` concepts. ` Event Sourcing ` ensures that all changes to application state are stored as a sequence of events. In the case of VUS, if the input data can be thought of as a domain event, it can be 'replayed' to reconstruct the application state after system failure. The domain events, i.e. the input data, are stored by ` Event Source ` module so the domain events are readily available but one of the challenges with ` Event Sourcing ` concept is knowing what and how much to 'replay' and having the ability to take a 'snapshot' on which to 'replay' the events. Both of these challenges are not trivial to implement.
+
+Regardless of the implementation choice for state managements, the detail design must cater for the non-functional aspect of the requirements such as scalability, performance and reliability as well. The implementation may not address all the concerns in the initial release but enough consideration should be in place to extend it further to incorporate additional capabilities. One of such capability is being able to cater for multiple 'cash-away' clients.
+
+#### Domain model
+
+The main design of VUS Core is based on the assumption that each message is related to a specific ***transaction identifier*** as noted in ` Assumptions `. And there are different types of messages or entities that are related by the ***transaction identifier***.
+
+This ***transaction identifier*** centric view implies that:
+
+* Messages are related by ***transaction identifier*** regardless of the message types
+* Messages with the same ***transaction identifier*** can be grouped together by the identifier for processing
+* For each unique ***transaction identifier*** it is associated with one and only one VUS message identifier
+* And the inverse is also true in that for each unique VUS message identifier it is associated with one and only one ***transaction identifier***
+* As long as the ***transaction identifier*** is globally unique, no special treatment is needed for different client
+
+The identification of the most suitable data structure to support the domain model in a design takes multiple iterations. However the current view is that the relationship between different domain entities can be best described with a graph structure as shown below:
+
+     (VUS Message)            (Transaction)
+           \                     /     \
+            \                   /       \
+     [identified_by]    [relates_to]  [with_account]
+              \               /           \
+               \             /             \
+          (Transaction Identifier)     (Account)---[corresponds_to]---(Account)
+               /   \         \             /                            /
+              /     \         \           /                            /
+          [has_fx]   \  [relates_to]  [with_account]            [with_account]
+            /         \         \       /                            /
+           /      [related_to]   \     /                            /
+          /             \         \   /                            / 
+      (FX Detail)        \    (Transaction)                       /
+                          \                                      /
+                      (Transaction)-----------------------------'
+
+The nodes of the graph is the domain entity and and the edges connecting the nodes describes the relationship between the domain entities.
+
+With such graph data structure, obtaining the information of the transactions for a given ***transaction identifier*** is as trivial as traversing the graph starting from the (Transaction Identifier) node and along the edges identified as 'relates_to' to arrive at (Transaction) nodes.
+
+The current opinion is that the graph data structure supports the business requirement for UTR in the most flexible and natural way with the caveat that the model must be validated for every use cases in the requirements with the support of POC.
+
+From the implementation perspective, the graph data structure can be created with the relational database where the edges between entities are implemented as 'many-to-many' table but with such implementation the cost of traversing the node becomes expensive. Alternatively the graph can be purely modeled with objects in memory but recalling the pros and cons highlighted in previous section it may not be the most desirable choice.
+
+The preferred option is to seek out a graph database that natively supports the graph data structure and graph operations where the cost of traversal is relatively cheap. Being the database it supports the persistence.
+
+#### Event dispatch
+
+The ***transaction identifier*** centric model means that when the messages arrive the first thing it determines is the identifier.
+
+what is there to talk about?
+
+* event dispatch? multi-thread?
+* thread model?
+
+
+#### Concurrent access ???
+
+* Multi thread?
+
+
+Describe steps
 
 ??? TODO  - do not read below this line, work in progress ???
 
