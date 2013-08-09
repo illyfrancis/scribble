@@ -386,7 +386,7 @@ VUS Core implements the main business logic according to the BRD. It is within t
 
 #### Managing state
 
-One of the key responsibilities is the maintenance of the state-transition for each transaction by the input events whereby the core component examines the input data in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or finite state machine - FSM) for each unique transaction.
+One of the key responsibilities is the handling of the state-transition for each transaction by the input events whereby the core component examines the input data in conjunction with its current state to determine the next valid state and performs predetermined actions. Essentially it requires a representation of a state machine (or finite state machine - FSM) for each unique transaction.
 
 There are various approaches for implementing a FSM. At one end of the spectrum, it can be implemented in the database by storing the current state against the transaction records and query the State/Event table that defines the state-transitions.
 
@@ -427,7 +427,7 @@ The identification of the most suitable data structure to support the domain mod
             /         \         \       /                            /
            /      [related_to]   \     /                            /
           /             \         \   /                            / 
-      (FX Detail)        \    (Transaction)                       /
+     (FX Detail)         \    (Transaction)                       /
                           \                                      /
                       (Transaction)-----------------------------'
 
@@ -439,7 +439,17 @@ The current opinion is that the graph data structure supports the business requi
 
 From the implementation perspective, the graph data structure can be created with the relational database where the edges between entities are implemented as 'many-to-many' table but with such implementation the cost of traversing the node becomes expensive. Alternatively the graph can be purely modeled with objects in memory but recalling the pros and cons highlighted in previous section it may not be the most desirable choice.
 
-The preferred option is to seek out a graph database that natively supports the graph data structure and graph operations where the cost of traversal is relatively cheap. Being the database it supports the persistence.
+The ideal middle ground in this case is to seek out a graph database that natively supports the graph data structure and graph operations as well as data storage on disk.
+
+#### Event processing
+
+With the domain model established, the processing of the incoming messages can be described in two phases.
+
+In the first, when the message arrives it extracts the ***transaction identifier*** with which the graph database is searched. If found the entity represented in the message is connected to the (Transaction Identifier) node, otherwise the new (Transaction Identifier) node is created first before the new entity is connected to it.
+
+In the next phase, it determines the valid action it can perform based on the current representation of states.
+
+
 
 #### Event dispatch
 
