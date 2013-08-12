@@ -435,7 +435,7 @@ The nodes of the graph is the domain entity and and the edges connecting the nod
 
 With such graph data structure, obtaining the information of the transactions for a given ***transaction identifier*** is as trivial as traversing the graph starting from the (Transaction Identifier) node and along the edges identified as 'relates_to' to arrive at (Transaction) nodes.
 
-The current opinion is that the graph data structure supports the business requirement for UTR in the most flexible and natural way with the caveat that the model must be validated for every use cases in the requirements with the support of POC.
+The current opinion is that the graph data structure supports the business requirement for VUS in the most flexible and natural way as it is easy to conceptualize and express the relationships between entities. However the caveat is that the model must be validated for every use cases in the requirements with the support of POC.
 
 From the implementation perspective, the graph data structure can be created with the relational database where the edges between entities are implemented as 'many-to-many' table but with such implementation the cost of traversing the node becomes expensive. Alternatively the graph can be purely modeled with objects in memory but recalling the pros and cons highlighted in previous section it may not be the most desirable choice.
 
@@ -443,15 +443,21 @@ The ideal middle ground in this case is to seek out a graph database that native
 
 #### Event processing
 
-With the domain model established, the processing of the incoming messages can be described in two phases.
+Given the graph based domain model, the processing of the incoming messages can be performed in steps described below.
 
-In the first, when the message arrives it extracts the ***transaction identifier*** with which the graph database is searched. If found the entity represented in the message is connected to the (Transaction Identifier) node, otherwise the new (Transaction Identifier) node is created first before the new entity is connected to it.
+In the first, when the message arrives it extracts the ***transaction identifier*** with which the graph database is searched. If found, the entity represented in the message (e.g. transaction information or FX detail) is created as a node then connected to the (Transaction Identifier) node, otherwise the new (Transaction Identifier) node is created first before the new entity is connected to it. Also any other node creation and connections between them is performed in this.
 
-In the next phase, it determines the valid action it can perform based on the current representation of states.
+In the next phase, it determines the next valid action it can perform based on the current representation of the nodes and its relationships. The dynamic behavior will vary depends on its current state and the business requirements. During this phase an outbound message is created and routed to a ` Event Sink ` as needed.
 
+In essence, the event processing is emulating a FSM and the simulation is necessary due to the fact that each input message/event does not correlate to a single discrete state. The 'pseudo' state can only be 'derived' from various sources, then it can be used to determine the next 'transition'.
 
+The 'pseudo' state derivation model supports out-of-order message processing by default in that all input events are captured in graph first on which the 'transition' decision is based. 
+
+the determination of 
 
 #### Event dispatch
+
+The detail design 
 
 The ***transaction identifier*** centric model means that when the messages arrive the first thing it determines is the identifier.
 
@@ -494,12 +500,17 @@ Capture design approach for each breakdown and success criteria?
 
 ???
 
-
 ## Operational Concerns
 
-> General question on this stream is shouldn't this concern be handled consistently and possibly with one solution/system for all P6 projects? If every sub-projects implement its own UI and monitoring solution in a disparate manner, there will be no consistency in its functionality and operations, resulting in mixture of procedures for the operator.
+The current version of the BRD does not stipulate the detail requirements regarding operational functions such as reporting. It is assumed that the further business analysis and detailed requirements will be provided in due course on which the detailed design will be based.
 
-> Instead, if the operational concerns are addressed as a separate sub-project whereby it defines a standard approach on how the errors are reported and alerts are raised etc (along with audit and logs), the other sub-projects (like VUS) can conform to it but it need not implement its own UI for it. (and managing users etc)
+The entire P6 systems wide administrative infrastructure for managing operational concerns such as reporting, monitoring and user managements etc are beyond the scope of VUS. However it is the responsibility of VUS to provide and make necessary information readily available to an external reporting and monitoring systems as required.
+
+In the absence of 
+
+
+### Reporting (only in relation to VUS messages)
+* Identify the requirement and source system(s)
 
 ### Monitoring / Alerts
 * Need more detailed requirements
@@ -512,9 +523,6 @@ Capture design approach for each breakdown and success criteria?
 * When to alert? - what is the condition?
 * How? Is it an UI?
 * How to set up?
-
-### Reporting (only in relation to VUS messages)
-* Identify the requirement and source system(s)
 
 ### UI
 * Who are the users?
