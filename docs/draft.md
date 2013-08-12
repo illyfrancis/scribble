@@ -86,39 +86,31 @@ The assumption is that there is one message type to describe all VUS messages (1
 
 ??? message format for VUS - XML? who should decide ???
 
-#### Posting of Provisional Cash Transaction
+#### Posting of provisional cash transaction
 
 As of `1 Aug ???`, the requirements relating to the treatment of 'provisional' messages are still under discussion within the business. When the details are confirmed and captured as concrete business requirements, the review of the high-level design presented in this document must take place to validate the current design and update as necessary.
 
-### General validity of the assumptions
+### General note on the assumptions and design
 
 It is critical to note that the high-level design is based on the validity / correctness of the assumptions.
 
 As at `???`, the BRD is still being finalized and as such any major changes or addendum to the requirements may impact the high-level design outlined in this document and may invalidate the fundamental design decisions.
 
-However, note that the high-level design should withstand minor requirement changes and it is the goal of the design to produce decoupled and modular system such that the impact of minor changes can be isolated and contained within a component.
+However, note that the high-level design should withstand minor requirement changes and it is the goal of the design to produce loosely-coupled and modular system such that the impact of minor changes can be isolated and contained within a component.
 
-## Scope ???
-
-What's in and what's out?
-
+It is also important to understand that the design may evolve throughout and beyond the first implementation.
 
 # High-level design
 
-??? TODO ???
-
-## Design considerations
-
 Aside from the primary goal of addressing the core functional requirements, the design presented in this document is conceived with the consideration of the following concerns.
 
-* decoupling
-* extensibility
-    * client neutral solution
-* scalability (vertical and horizontal)
-* performance
-* reliability (fail-over, capacity etc)
+* Extensibility and maintainability
+* Loose coupling
+* Performance
+* Scalability (vertical and horizontal)
+* Reliability (fail-over, capacity etc)
 
-??? expand ???
+The high-level design also aims to provide client neutral solution.
 
 ## Systems diagram
 
@@ -394,7 +386,7 @@ An advantage with this approach is the durable nature of the database when compa
 
 In contrast, in-memory model better manages the throughput concerns as it reduces the I/O bound database interactions to a minimum but at the cost of higher memory usage and with the loss of persistence. But with in-memory model, the state-transition logic can be more expressive with the semantics of programming language when compared to modeling the logic in a database table, yielding more maintainable application.
 
-An ideal middle ground is the hybrid of the two approaches where the solution maintains the states in persistent store with higher throughput without consuming too much memory whilst take advantage of the multiple CPUs / multi-cores that the modern hardware architecture commonly provide.
+An ideal middle ground is the hybrid of the two approaches where the solution maintains the states in persistent store with higher throughput without consuming too much memory whilst take advantage of the multiple processors / multi-cores that the modern hardware architecture commonly provide.
 
 Another way to think about the state management problem is by considering ` Event Sourcing ` concepts. ` Event Sourcing ` ensures that all changes to application state are stored as a sequence of events. In the case of VUS, if the input data can be thought of as a domain event, it can be 'replayed' to reconstruct the application state after system failure. The domain events, i.e. the input data, are stored by ` Event Source ` module so the domain events are readily available but one of the challenges with ` Event Sourcing ` concept is knowing what and how much to 'replay' and having the ability to take a 'snapshot' on which to 'replay' the events. Both of these challenges are not trivial to implement.
 
@@ -431,7 +423,7 @@ The identification of the most suitable data structure to support the domain mod
                           \                                      /
                       (Transaction)-----------------------------'
 
-The nodes of the graph is the domain entity and and the edges connecting the nodes describes the relationship between the domain entities.
+The node of the graph is the domain entity and and the edge connecting the nodes describes the relationship between the domain entities.
 
 With such graph data structure, obtaining the information of the transactions for a given ***transaction identifier*** is as trivial as traversing the graph starting from the (Transaction Identifier) node and along the edges identified as 'relates_to' to arrive at (Transaction) nodes.
 
@@ -439,7 +431,7 @@ The current opinion is that the graph data structure supports the business requi
 
 From the implementation perspective, the graph data structure can be created with the relational database where the edges between entities are implemented as 'many-to-many' table but with such implementation the cost of traversing the node becomes expensive. Alternatively the graph can be purely modeled with objects in memory but recalling the pros and cons highlighted in previous section it may not be the most desirable choice.
 
-The ideal middle ground in this case is to seek out a graph database that natively supports the graph data structure and graph operations as well as data storage on disk.
+The ideal middle ground in this case is to seek out a graph database that natively supports the graph data structure and its graph operations as well as one that provides data storage on disk.
 
 #### Event processing
 
@@ -449,17 +441,54 @@ In the first, when the message arrives it extracts the ***transaction identifier
 
 In the next phase, it determines the next valid action it can perform based on the current representation of the nodes and its relationships. The dynamic behavior will vary depends on its current state and the business requirements. During this phase an outbound message is created and routed to a ` Event Sink ` as needed.
 
-In essence, the event processing is emulating a FSM and the simulation is necessary due to the fact that each input message/event does not correlate to a single discrete state. The 'pseudo' state can only be 'derived' from various sources, then it can be used to determine the next 'transition'.
+In essence, the event processing is emulating a FSM and the simulation is necessary due to the fact that each input message/event does not correlate to a discrete single state. The 'pseudo' state can only be 'derived' from various sources, then it can be used to determine the next 'transition'.
 
-The 'pseudo' state derivation model supports out-of-order message processing by default in that all input events are captured in graph first on which the 'transition' decision is based. 
+The 'pseudo state derivation' model supports out-of-order message processing by default in that all input events are captured in graph on which the 'transition' decision is based. That is, when the state is derived from the graph, it takes the 'history' of the messages into account according to the business requirements.
 
-the determination of 
+#### Outbound message
 
-#### Event dispatch
+The outbound message (or VUS message) is a snapshot view of a composition of which it is made up of various transaction details. Given the following graph, the VUS message can be created from (Transaction) nodes and (FX Detail) node.
 
-The detail design 
+     (VUS Message)            (Transaction)
+           \                     /    
+            \                   /       
+     [identified_by]      [relates_to]  
+              \               /           
+               \             /             
+          (Transaction Identifier)---[relates_to]---(Transaction)
+               /             \         
+              /               \         
+          [has_fx]        [relates_to] 
+            /                   \     
+           /                     \   
+          /                       \  
+     (FX Detail)              (Transaction)                   
 
-The ***transaction identifier*** centric model means that when the messages arrive the first thing it determines is the identifier.
+For composition of the VUS messages from the (Transaction) nodes where are two options.
+
+The first is to 'merge' the three transactions which would require a complex logic for determining the merge rule. The second, and preferred, option is to create a 'weighted' connection (or relationship with properties) that the query can make use of. For example, a version number of transaction can be used as a property on the relationship and when the graph is queried it only retrieves the (Transaction) with the latest version. Because graph databases support such operations out-of-the-box (e.g. shortest path, Dijkstra's algorithm etc) the associated cost would be very low.
+
+Note however, the validity of the second approach depends on the business requirements in that it may not be sufficient to rely on properties defined in relationships.
+
+#### Concurrency
+
+For high performance and throughput it is assumed that the runtime model of the design will utilize multiple threads. However concurrent programming in any programming language requires expert knowledge and experience to achieve the goal. And the concurrency model becomes even more difficult to manage when replication and distribution comes into consideration.
+
+
+
+In Java, since version 5 the platform includes concurrency APIs and it continues to enhance its features in each releases with Fork/Join framework available in Java 7 being the latest major features (not including upcoming Java 8).
+
+
+ Generally speaking the support for concurrent programming in Java has improved 
+
+
+
+??? what am I talking about here ???
+
+The expectation is that the core module's execution model is not single threaded.
+
+For the purpose of performance and thread
+
 
 what is there to talk about?
 
@@ -471,67 +500,49 @@ what is there to talk about?
 
 * Multi thread?
 
+#### VUS reference Id generation
 
-Describe steps
+The generated Id must be unique and must withstand system restart. The uniqueness must be also guaranteed across multiple instances in the case of distributed VUS core components.
 
-??? TODO  - do not read below this line, work in progress ???
-
-***
-
-??? key items
-
-* VUS Ref Id generation
-    * ensuring uniqueness, durable with re-start
-* Persistence and logs
-
-
-#### Approach
-
-Further breakdown by messages
-* VUS 1, 2 or .. 7
-
-Or breakdown by type
-* Trade transactions
-* MF trade transactions
-* Corporate action transactions
-
-Capture design approach for each breakdown and success criteria?
-
-
-???
 
 ## Operational Concerns
 
-The current version of the BRD does not stipulate the detail requirements regarding operational functions such as reporting. It is assumed that the further business analysis and detailed requirements will be provided in due course on which the detailed design will be based.
+The current version of the BRD does not stipulate the detail requirements regarding operational functions such as reporting or monitoring. It is assumed that the further business analysis and detailed requirements to be provided in due course on which the detailed design will be based.
 
-The entire P6 systems wide administrative infrastructure for managing operational concerns such as reporting, monitoring and user managements etc are beyond the scope of VUS. However it is the responsibility of VUS to provide and make necessary information readily available to an external reporting and monitoring systems as required.
+The entire P6 systems wide administrative infrastructure for managing operational concerns such as reporting, monitoring and user managements etc are beyond the scope of VUS. However it is the responsibility of VUS to provide and make necessary information readily available to an external reporting and monitoring systems if defined in BRD.
 
-In the absence of 
+### VUS Reports
 
-
-### Reporting (only in relation to VUS messages)
-* Identify the requirement and source system(s)
-
-### Monitoring / Alerts
-* Need more detailed requirements
-* Defining alertable events
-    * Need to determine the criteria for raising alerts
-* Related to UI
-* From BRD,
-    * Have an alert process to generate a warning if VUS 4 or VUS 4 PROV have been sent but VUS 5 or VUS 5 PROV have not been received
-* Who to alert?
-* When to alert? - what is the condition?
-* How? Is it an UI?
-* How to set up?
+In the absence of detailed requirements, VUS assumes the message captures occur in ` Event Source ` and ` Event Sink ` be sufficient to support the operational reporting requirements for VUS.
 
 ### UI
-* Who are the users?
-* What are the requirements?
-* ACL requirements
-    * Role based?
 
-### Assume ?
-* Further analysis and detailed requirement will be provided in due course
+The current requirement captured in BRD states:
+
+    Have a front end GUI to allow users to track the status of the messages
+
+However it is unclear from the BRD and difficult to determine:
+
+* Who the users are
+* Access control requirements of the users
+* Where the users are managed
+* Query criteria
+* UI designs
+
+As per VUS Reports, VUS assumes the message captures occur in ` Event Source ` and ` Event Sink ` be sufficient to support the query.
+
+### VUS Alerts
+
+From BRD, the requirement relating to alerts is stated as:
+
+    Have an alert process to generate a warning if VUS 4 or VUS 4 PROV have been sent but VUS 5 or VUS 5 PROV have not been received within a specified period of time
+
+Question remains:
+
+* Who is alerted
+* What is the medium of delivery (UI, Email etc)
+* What is contained in a warning
+* Should the warning be generated only once
 
 ## Development approach
 * map components to stream
@@ -541,8 +552,6 @@ In the absence of
 * Actor model
 * Graph DB
 * DI framework?
-
-## HW requirements (defer)
 
 ## NFR? concerns
 
