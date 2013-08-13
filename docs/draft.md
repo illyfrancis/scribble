@@ -1,8 +1,10 @@
+`[toc]`
+
 # Introduction
 
 ## Background
 
-The purpose of this document is to state the design assumptions and to provide high-level design for VUS system. Also it aims to outline the integration approach with its external dependencies. The design is based on the business requirements document (BRD) titled `??? title` prepared by `??? author` that captures the business drivers and the detail description of the business requirements.
+The purpose of this document is to state the design assumptions and to provide high-level design for VUS system. Furthermore it aims to outline the integration approach for various external dependencies. The design is based on the business requirements document (BRD) titled `??? title` prepared by `??? author` that captures the business drivers and the detail description of the business requirements.
 
 The reader of this document should refer to the business requirements document to grasp the full business context on which the high-level design is based.
 
@@ -84,13 +86,11 @@ For both UAF and 'Static database', it is assumed that:
 
 The assumption is that there is one message type to describe all VUS messages (1-7). However there may be an unforeseen situation where a single message type may not sufficiently support the business requirement or there is potential for performance gain by defining multiple types. Under these circumstances the system may introduce an additional message types.
 
-??? message format for VUS - XML? who should decide ???
-
 #### Posting of provisional cash transaction
 
 As of `1 Aug ???`, the requirements relating to the treatment of 'provisional' messages are still under discussion within the business. When the details are confirmed and captured as concrete business requirements, the review of the high-level design presented in this document must take place to validate the current design and update as necessary.
 
-### General note on the assumptions and design
+### General notes on the assumptions and design
 
 It is critical to note that the high-level design is based on the validity / correctness of the assumptions.
 
@@ -332,11 +332,11 @@ As noted in the assumptions section, the reference data 'look up' service for du
     }
     
     interface DualAccountService {
-      DualAccountType determineType(int accountNumber);
-      int getAccountNumberTypeA(int accountNumber);
-      int getAccountNumberTypeB(int accountNumber);
-      int getAccountNumberTypeC(int accountNumber);
-      int getClientAccountNumber(int accountNumber);
+      DualAccountType determineType(String accountNumber);
+      String getAccountNumberTypeA(String accountNumber);
+      String getAccountNumberTypeB(String accountNumber);
+      String getAccountNumberTypeC(String accountNumber);
+      String getClientAccountNumber(String accountNumber);
     }
 
 And for the 'static database', the component interface would resemble the following:
@@ -346,7 +346,7 @@ And for the 'static database', the component interface would resemble the follow
     }
 
     interface ReferenceData {
-      boolean isContractual(int accountNumber, TransactionType txType);
+      boolean isContractual(String accountNumber, TransactionType txType);
       String fxCounterPartyForSEB(???);
     }
 
@@ -470,41 +470,6 @@ The first is to 'merge' the three transactions which would require a complex log
 
 Note however, the validity of the second approach depends on the business requirements in that it may not be sufficient to rely on properties defined in relationships.
 
-#### Concurrency
-
-For high performance and throughput it is assumed that the runtime model of the design will utilize multiple threads. However concurrent programming in any programming language requires expert knowledge and experience to achieve the goal. And the concurrency model becomes even more difficult to manage when replication and distribution comes into consideration.
-
-
-
-In Java, since version 5 the platform includes concurrency APIs and it continues to enhance its features in each releases with Fork/Join framework available in Java 7 being the latest major features (not including upcoming Java 8).
-
-
- Generally speaking the support for concurrent programming in Java has improved 
-
-
-
-??? what am I talking about here ???
-
-The expectation is that the core module's execution model is not single threaded.
-
-For the purpose of performance and thread
-
-
-what is there to talk about?
-
-* event dispatch? multi-thread?
-* thread model?
-
-
-#### Concurrent access ???
-
-* Multi thread?
-
-#### VUS reference Id generation
-
-The generated Id must be unique and must withstand system restart. The uniqueness must be also guaranteed across multiple instances in the case of distributed VUS core components.
-
-
 ## Operational Concerns
 
 The current version of the BRD does not stipulate the detail requirements regarding operational functions such as reporting or monitoring. It is assumed that the further business analysis and detailed requirements to be provided in due course on which the detailed design will be based.
@@ -513,7 +478,9 @@ The entire P6 systems wide administrative infrastructure for managing operationa
 
 ### VUS Reports
 
-In the absence of detailed requirements, VUS assumes the message captures occur in ` Event Source ` and ` Event Sink ` be sufficient to support the operational reporting requirements for VUS.
+In the absence of detailed requirements, VUS assumes the message captures that occur in ` Event Source ` and ` Event Sink ` to be sufficient to support the operational reporting requirements for VUS.
+
+The assumption is that the messages are stored in a document based database. If the reporting requirements necessitate the data in a predefined structured format, the messages may be published via message queue for consumption by the reporting system.
 
 ### UI
 
@@ -537,30 +504,11 @@ From BRD, the requirement relating to alerts is stated as:
 
     Have an alert process to generate a warning if VUS 4 or VUS 4 PROV have been sent but VUS 5 or VUS 5 PROV have not been received within a specified period of time
 
-Question remains:
+Questions remain:
 
 * Who is alerted
-* What is the medium of delivery (UI, Email etc)
+* What is the medium of notification (UI dashboard, Email etc)
 * What is contained in a warning
 * Should the warning be generated only once
 
-## Development approach
-* map components to stream
-
-## Tool selections - ???
-* Java version 6 or 7
-* Actor model
-* Graph DB
-* DI framework?
-
-## NFR? concerns
-
-## Resource dependencies
-* Availability of MQ resources
-
-## Assumptions on NFR (lowest priority)
-* Transaction volume
-* the number of SEB's clients, or the number accounts for SEB's business
-* For capacity estimates/planning etc
-    * Redundancy
-* Latency and throughput requirements
+In the absence of detail requirements, ` UTR Core ` will manage the detection of alert condition but the notification of alerts may be a part of an overall P6 operational administrative infrastructure.
