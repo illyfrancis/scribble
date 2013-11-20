@@ -1,3 +1,4 @@
+
 # Content
 
 [toc]
@@ -22,6 +23,12 @@ Write a short program in Java to reverse the order of words in the following str
 Your output should look like this:
 
     sneezy sleepy happy grumpy dopey doc bashful
+
+or simpler example over the phone:
+
+	String colors = "blue green red yellow";
+
+	yellow red green blue
 
 > This answer splits the string on whitespace and then uses a LIFO (last in, first out) stack to reverse the list:
 
@@ -101,11 +108,21 @@ Listing 3-2. Java Code to Get a Duplicated Number in an Array
 
 ## Fibonacci number
 
+E.g. `0, 1, 1, 2, 3, 5, 8, ...`
+
+	fibo(2) = fibo(1) + fibo(0)
+			= 1 + 0
+			= 1
+
+	fibo()
+
+
 Given a number n, please find the nth element in the Fibonacci Sequence, which is defined as the following equation:
 
     f(0) = 0;
     f(1) = 1;
     f(n) = f(n-1) + f(n-2);
+
 
 #### Recursive and Inefficient
 
@@ -201,6 +218,11 @@ Contrast this with the equivalent code for a simple array where you must iterate
 
 ## Hash table
 
+#### Write a class named `Person`
+
+Let's write a class named `Person`. It has a field called `name` of type String.
+We want to use instance of this class as a key in a hash table.
+
 #### Write a class named `MyKey` to be used as a key to a map
 
 MyKey has a field called identity of a type String. The identity field will be unique.
@@ -223,8 +245,9 @@ Get candidate to explain what happens.
 
 ## Immutability
 
-1. Let's add a date field to `MyKey`
-1. Extend the `MyKey` class to be immutable.
+1. Let's add a date field for date of birth, `dob` to `Person`
+1. Extend the `Person` class to be immutable.
+
 2. Looking for `final` & `private` fields
 3. Prevent sub classing (by final or with private constructor and use factory)
 4. No modifier (e.g. no setter method)
@@ -234,33 +257,59 @@ Get candidate to explain what happens.
 
 With private constructor, one cannot create an instance.
 
+## Concurrency
+
+What are the difference between:
+
+- Hashtable
+- HashMap
+- Collections.synchronizedMap(Map)
+- ConcurrentHashMap
+
+Comparison
+
+    +---------------+-------------------+-------------------+---------------------+
+    |   Property    |     HashMap       |    Hashtable      |  ConcurrentHashMap  |
+    +---------------+-------------------+-------------------+---------------------+ 
+    |      Null     |     allowed       |   not allowed     |     not allowed     |
+    |  values/keys  |                   |                   |                     |
+    +---------------+-------------------+-------------------+---------------------+
+    |Is thread-safe |       no          |       yes         |          yes        |
+    +---------------+-------------------+-------------------+---------------------+
+    |     Lock      |       not         |  locks the whole  | locks the portion of| 
+    |  mechanism    |    applicable     |       map         |          map        | 
+    +---------------+-------------------|-------------------+---------------------+
+    |   Iterator    |               fail-fast               |       fail-safe     | 
+    +---------------+---------------------------------------+---------------------+
+
 # DI and testing
 
 ## Scenario
 
-Let's say, we have an Item with an id (int)
+Let's say, we have an Item with a name (String)
 
     public class Item {
-    	private int id,
-    	private String name
+    	private String name,
+    	private int quantity
     }
 
 we have an interface named Repository with get() and save(Item item)
 
     public interface Repository {
-    	public Item get(int id);
+    	public Item get(String name);
     	public void save(Item item);
     }
 
 There will be different implementations of Repository depending on the persistence technology of choice. E.g. RDbRepository, GraphDbRepository etc. But it's not done yet.
 
-We need to create a process in a Service that uses the Repository to retrieve an item by its id. Apply some logic to it then save it back.
+We need to create a process in a Service that uses the Repository to retrieve an item by its name. Apply some logic to it then save it back. Let's assume the process takes the quantity and doubles it.
 
 Write the test first?
+
 Write the service class. You can use DI framework if needed.
 
     public class Service {
-    	public String process(int id);
+    	public void process(int id);
     }
 
 # Concurrency
@@ -391,6 +440,28 @@ Note that the C# lock isn’t as flexible as the Java synchronized because the l
 
 # Garbage collection
 
+## Java process
+
+Get the candidate to explain the stack and a heap in the context of a java process.
+
+Stack is where local variables holding primitives are created. and local variables of reference type will point at heap-allocated memory. The heap is where objects will be created.
+
+## Mark and sweap [old]
+
+Simplest garbage collection algo. 
+
+Does Java keep reference-counting scheme? NO 
+
+The algorithm pauses all running program threads and starts from the set of objects that are known to be "live" objects that have a reference in any stack frame. (whether that reference is the content of a local variable, method parameter, temporary variable or user thread.)
+
+Then walks through the tree of references from the live objects, marking as live any object found en route. When this has completed, everything left is garbage and can be collected (swept).
+
+## Generational GC
+
+Describe the heap structure. (eden | survivor (split in half) | tenured | perm gen)
+
+A good example : http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/gc01/index.html
+
 ## What is structure of Java Heap? 
 
 What is Perm Gen space in Heap?
@@ -434,21 +505,21 @@ Describe the design pattern that is being implemented in the following code:
 PROBLEM: Why would you use the Decorator pattern instead of inheritance?
 
 Recall that the Decorator pattern wraps one object with another object to change the original object’s behavior. The wrapper object can take the place of the original object because they share the same abstract base class (or implement the same interface).
+
 Both the Decorator pattern and inheritance provide means of modifying the behavior of an object of the underlying class, but in different ways. Inheritance typically allows modification of the parent class only at compile time, while decorations are applied dynamically at run time.
+
 Suppose you have an object that needs to dynamically change behavior. Accomplishing this with inheritance may be cumbersome and inefficient: Every time you need to change behavior, you’ll probably need to construct a new object of a different child class with the desired behavior, copy the state from the existing object to the new one, and throw the old one away. In contrast, modifying the behavior of the existing object using the Decorator pattern is much simpler — just add the appropriate decoration (that is, wrap the existing object with another wrapper that implements the modified behavior).
 
 The dynamic nature of the Decorator pattern has another advantage. Suppose you have several behavior modifications that you’d like to implement for a class. Assume that none of these modifications interfere with any of the others, so you can apply them in any combination. A classic example of this is a GUI toolkit with a Window class that may be modified by multiple different behaviors, such as Bordered, Scrollable, Disabled, and so on. You could implement this with inheritance: deriving BorderedWindow from Window, ScrollableBorderedWindow and DisabledBorderedWindow from BorderedWindow, and so on. This is reasonable for a small number of behaviors, but as the number of behaviors increases, your class hierarchy rapidly gets out of hand. The number of classes doubles each time you add a new behavior. You can avoid this explosion of largely redundant classes with the Decorator pattern. Each behavior is completely described by a single Decorator class, and you can generate whatever combination of behaviors you need by applying the appropriate set of decorations.
+
 The Decorator pattern simplifies object-oriented design when applied correctly, but may have the opposite effect when used indiscriminately. If you don’t need to dynamically modify the behavior of an object, then it’s probably best to use simple inheritance and avoid the complexity of this pattern. Also, Concrete Decorator classes generally shouldn’t expose new public methods; so if you need to do this, using Decorators probably isn’t the best approach (Concrete Decorator classes shouldn’t expose new public methods because they would likely become inaccessible when subsequent decorations are added.) Finally, you should make sure that your Concrete Decorator classes are truly mutually non-interfering. There’s no good way to forbid combinations of decorations that are conflicting or don’t make sense, so using the Decorator pattern in these circumstances may invite bugs later on.
 
 
 # House keeping
 
-## Relational database
+## Looking forward...
 
-What is?
-
-- inner join
-- outer join
+Do you know what's in Java 8?
 
 ## Security
 
@@ -456,16 +527,13 @@ What is?
 
 - SQL injection
 - XSS
+- CSRF ([cross site request forgery](https://www.google.com/search?q=csrf&aq=f&oq=csrf&aqs=chrome.0.57j5j59j0j62j61&sugexp=chrome,mod=19&sourceid=chrome&ie=UTF-8))
 
 How to prevent the problem?
 
-## Agile, scrum?
-
-- used any tools?
-- agile (what's the done criteria) - describe their process
-- write any testing? what coverage? what tools have you used?
-
 ## Testing
+
+How do you test your code?
 
 Familiar with?
 
@@ -474,8 +542,11 @@ Familiar with?
 - Difference between unit testing and integration testing?
 - Load testing?
 
+## Agile, scrum?
 
-
+- used any tools?
+- agile (what's the done criteria) - describe their process
+- write any testing? what coverage? what tools have you used?
 
 ---
 
