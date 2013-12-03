@@ -81,6 +81,11 @@ abstract class TweetSet {
    * and be implemented in the subclasses?
    */
   def descendingByRetweet: TweetList
+  
+  /**
+   * Test if the set is empty
+   */
+  def isEmpty: Boolean = true
 
   /**
    * The following methods are already implemented
@@ -134,20 +139,21 @@ class Empty extends TweetSet {
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = {
-    val f = if (p(elem)) acc.incl(elem) else acc
-    val l = left.filterAcc(p, f)
-    right.filterAcc(p, l)
+    val filteredElem = if (p(elem)) acc.incl(elem) else acc
+    val filteredLeft = left.filterAcc(p, filteredElem)
+    right.filterAcc(p, filteredLeft)
   }
 
-  def filterAcc2(p: Tweet => Boolean, acc: TweetSet): TweetSet = {
-    val filteredFromLeft = left.filterAcc(p, acc)
-    val filteredFromRight = right.filterAcc(p, filteredFromLeft)
-    if (p(elem)) filteredFromRight.incl(elem)
-    else filteredFromRight
-  }
-
-  def union(that: TweetSet): TweetSet =
+  def union1(that: TweetSet): TweetSet =
     ((left union right) union that) incl elem
+    
+  def union(that: TweetSet): TweetSet = {
+    var temp: TweetSet = this
+    that.foreach(e => {
+      temp = temp.incl(e) 
+    })
+    temp
+  }
 
   def mostRetweeted: Tweet = mostRetweetedAcc(elem)
 
@@ -156,19 +162,19 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     val mostFromRight = right.mostRetweetedAcc(mostFromLeft)
     if (mostFromRight.retweets < elem.retweets) elem else mostFromRight
   }
-  
+
   def descendingByRetweet: TweetList = {
-	def foo(s: TweetSet, list: TweetList): TweetList = {
-		new Cons(s.mostRetweeted, list)
-	}
-	
-	foo(this, Nil)
-    
-    mostRetweeted
-    
-    Nil
+    def descend(set: TweetSet): TweetList = {
+      if (set.isEmpty) Nil
+      else {
+        val most = set.mostRetweeted
+        new Cons(most, descend(set.remove(most)))
+      }
+    }
+    descend(this)
   }
   
+  override def isEmpty: Boolean = false
 
   /**
    * The following methods are already implemented
@@ -218,18 +224,19 @@ class Cons(val head: Tweet, val tail: TweetList) extends TweetList {
   def isEmpty = false
 }
 
+
 object GoogleVsApple {
   val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
   val apple = List("ios", "iOS", "iphone", "iPhone", "ipad", "iPad")
 
-  lazy val googleTweets: TweetSet = ???
-  lazy val appleTweets: TweetSet = ???
+  lazy val googleTweets: TweetSet = allTweets.filter(e => google.exists(e.text.contains))
+  lazy val appleTweets: TweetSet = allTweets.filter(e => apple.exists(e.text.contains))
 
   /**
    * A list of all tweets mentioning a keyword from either apple or google,
    * sorted by the number of retweets.
    */
-  lazy val trending: TweetList = ???
+  lazy val trending: TweetList = (googleTweets union appleTweets).descendingByRetweet
 }
 
 object Main extends App {
