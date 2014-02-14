@@ -1,0 +1,21 @@
+<html>
+<head>
+  <title>client2</title>
+<body>
+  <div>hello</div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io.connect('http://localhost:9092');
+    socket.on('this', function (data) {
+      console.log('this : ' + data);
+    });
+
+    socket.on('news', function (data) {
+      console.log(data);
+      socket.emit('my other event', { my: 'data' });
+    });
+  </script>
+
+</body>
+</html>
+

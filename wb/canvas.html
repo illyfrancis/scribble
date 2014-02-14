@@ -1,0 +1,50 @@
+<head>
+  <script>
+    function draw() {
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+
+      var x;
+      var y;
+
+      canvas.onmousedown = function(e) {
+        x = e.clientX;
+        y = e.clientY;
+        ctx.moveTo(x, y);
+        console.log('mdown: x:' + x + ", y:" + y);
+      }
+
+      canvas.onmouseup = function(e) {
+        x = null;
+        y = null;
+      }
+
+      canvas.onmousemove = function(e) {
+        if (x == null || y == null) {
+          return;
+        }
+        console.log('mmove 1: x:' + x + ", y:" + y);
+
+        x = e.clientX;
+        y = e.clientY;
+
+        console.log('mmove 2: x:' + x + ", y:" + y);
+
+        x -= canvas.offsetLeft;
+        y -= canvas.offsetTop;
+
+        console.log('mmove 3: x:' + x + ", y:" + y);
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.moveTo(x, y);
+      }
+    };
+  </script>
+</head>
+<body onload="draw();">
+  <canvas id="canvas" width="300" height="300"
+  style="border: 2px solid black;"></canvas>
+</body>
