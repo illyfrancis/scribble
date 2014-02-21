@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "dummy.js",
+  "sourceRoot": "",
+  "sources": [
+    "dummy.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA,MAAA,MAAA;;AAAA,EAAA,MAAA,GAAS,EAAT,CAAA;AAAA"
+}

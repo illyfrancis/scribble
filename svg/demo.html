@@ -1,0 +1,53 @@
+<html>
+<head>
+  <title>svg</title>
+  <script type="text/javascript">
+  function draw() {
+    console.log("draw");
+    var x, y;
+    var svg = document.getElementById("xxx");
+    svg.onmousedown = function(e) {
+      x = e.clientX;
+      y = e.clientY;
+      // ctx.moveTo(x, y);
+      console.log('mdown: x:' + x + ", y:" + y);
+    }
+
+    svg.onmouseup = function(e) {
+      x = null;
+      y = null;
+    }
+
+    svg.onmousemove = function(e) {
+      if (x == null || y == null) {
+        return;
+      }
+      console.log('mmove 1: x:' + x + ", y:" + y);
+
+      x = e.clientX;
+      y = e.clientY;
+
+      console.log('mmove 2: x:' + x + ", y:" + y);
+
+      // x -= svg.offsetLeft;
+      // y -= svg.offsetTop;
+
+      // console.log('mmove 3: x:' + x + ", y:" + y);
+
+      // ctx.lineTo(x, y);
+      // ctx.stroke();
+      // ctx.moveTo(x, y);
+    }
+  }
+  </script>
+</head>
+<body onload="draw()">
+<svg id="xxx" width="500" height="200">
+  <rect x="0" y="0" width="20" height="5"/>
+  <circle cx="40" cy="25" r="2" />
+  <ellipse cx="80" cy="40" rx="8" ry="3" />
+  <line x1="80" y1="60" x2="100" y2="80" stroke="black"/>
+  <text x="100" y="30">shapes</text>
+</svg>
+</body>
+</html>

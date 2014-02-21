@@ -1,0 +1,27 @@
+{
+  "name": "example",
+  "version": "0.0.0",
+  "description": "browserify example",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "readme.md",
+  "dependencies": {
+    "connect": "~2.13.0",
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.0"
+  },
+  "devDependencies": {
+    "gulp-util": "^2.2.14",
+    "gulp": "^3.5.2",
+    "gulp-jshint": "^1.4.2",
+    "gulp-concat": "^2.1.7",
+    "gulp-uglify": "^0.2.1",
+    "gulp-jasmine": "^0.1.4",
+    "gulp-coverage": "0.0.19"
+  }
+}
