@@ -5,13 +5,15 @@
       var ctx = canvas.getContext("2d");
       ctx.fillStyle = "black";
       ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
 
       var x;
       var y;
 
       canvas.onmousedown = function(e) {
-        x = e.clientX;
-        y = e.clientY;
+        x = e.clientX - canvas.offsetLeft;
+        y = e.clientY - canvas.offsetTop;
         ctx.moveTo(x, y);
         console.log('mdown: x:' + x + ", y:" + y);
       }
