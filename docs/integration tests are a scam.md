@@ -116,3 +116,107 @@ Q2: (1:21:24) solid principals etc clean code -> four elements of ... Kent Beck 
 Q3: (1:24:55) don't throw away BDD, still need to clarify the requirement but cannot substitute basic correctness test.
 Q4: (1:27:30) only put interfaces in front of service, not values or entity
 Q5: (1:30:30) couldn't hear well but... what if mocking is harder than creating a real object... -> code smell, need to refactor possibly doing too much.
+
+### Examples
+
+If A calls B.foo(x,y,z) and I want to check that A gets x,y,z right, then I write collaboration tests that show how A chooses characteristic values for x,y,z. For example, which inputs to A or which system states cause A to choose x = 12 instead of x = 15 or 20?
+
+If B.foo(x,y,z) rejects x < 0, y < 10, z > 50 then write contract tests on B.foo() for the boundary cases.
+
+# My questions
+
+When writing contract tests can it depend on mocks? This [question](http://thecodewhisperer.tumblr.com/post/1172613515/stub-your-data-access-layer-it-wont-hurt) asks the same thing but no clear answer.
+
+### More questions
+
+- This [link](https://groups.google.com/forum/#!topic/growing-object-oriented-software/ma3WPD45Oek) contains other presentations on TDD etc including
+	- [TDD, where did it all go wrong](http://vimeo.com/68375232)
+		- okay watch, don't agree entirely
+	- [Test driven development (that's not waht we meant)](http://vimeo.com/83960706)
+		- [slide](http://gotocon.com/dl/goto-berlin-2013/slides/SteveFreeman_TestDrivenDevelopmentThatsNotWhatWeMeant.pdf) for it
+
+# TDD, where did it all go wrong
+
+> http://vimeo.com/68375232
+
+- Re-read test-driven development by example (kent beck)
+
+## Zen of TDD
+
+#### Avoid testing implementation details, test behaviors
+- A test-case per class approach fails to capture the ethos for TDD
+	- Adding a new class is not the trigger for writing tests. The trigger is implementing a requirement
+- Test outside-in, (though use ports and adapters and making the 'outside' the port), writing tests to cover then use cases
+- Only writing tests to cover the implementation details when you need to better understand the refactoring of the simple implementation we start with
+
+#### Dan North (who the hell is he?)
+
+Agile expert and originator of BDD
+
+Act | Arrange | Assert
+
+#### What is a unit test?
+- Kent Beck, a test that 'runs in isolation' from other tests
+- ??? (22:00???)
+
+#### Red-green-refactor
+
+#### Clean code when?
+- Now
+- Test behaviors not implementations
+
+### Ports and adapters
+
+Ice-cream vs testing pyramid
+
+... not bored 47:56
+
+# Test driven development (that's not waht we meant)
+
+> http://vimeo.com/83960706
+
+### Security Theater
+
+Doesn't add anything...
+
+-> Testing Theater
+
+### Example
+
+A common bad test.
+
+```
+BasketTest.add_adding_item()
+	sut = new Basket()
+	sut.add(ITEM)
+	assertEquals(
+		ITEM,
+		backdoor(sut, "itemList")[0])
+```
+
+There's no intend, no consequences.
+
+Instead write readable code.
+
+```
+is_empty_when_created()
+	assertThat( new Basket().itemCount(), equals(0))
+
+returns_items_in_the_order_they_were_added()
+	basket = new Basket()
+				.add(pen).add(ink).add(paper)
+	assertThat(basket,
+			hasItems(pen, ink, paper))
+
+totals_up_the_cost_of_its_items()
+
+fails_when_removing_an_absent_item()
+...
+```
+
+- Interfaces not internals
+- Protocols, not interfaces
+- From simple to general
+- It's about explaining the domain, not about proving the correctness of the code (Andrew Parker)
+
+### When you're lost, slow down

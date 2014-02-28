@@ -1,0 +1,23 @@
+{
+  "name": "demo",
+  "version": "0.0.0",
+  "description": "none",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.5.2",
+    "gulp-browserify": "^0.4.6",
+    "handlebars": "^1.3.0",
+    "hbsfy": "^1.3.2",
+    "connect": "^2.13.0"
+  },
+  "dependencies": {
+    "underscore": "^1.6.0",
+    "backbone": "^1.1.2",
+    "jquery": "^2.1.0"
+  }
+}
