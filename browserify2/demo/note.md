@@ -69,3 +69,31 @@ work out how to use gulp + browserify + hbsfy
 
 - https://www.npmjs.org/browse/keyword/browserify
 - https://www.npmjs.org/package/hbsfy
+
+### Install gulp
+
+1. Install globally
+
+```
+npm install gulp -g
+```
+
+2. Intall gulp in project devDependencies
+
+```
+npm install gulp --save-dev
+```
+
+3. Create a `gulpfile.js` at the project root
+
+```
+var gulp = require('gulp');
+
+gulp.task('default', function () {
+	
+});
+```
+
+4. Run gulp
+
+`$ gulp`
