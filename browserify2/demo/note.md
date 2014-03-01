@@ -21,7 +21,7 @@ npm install --save backbone jquery underscore
 ### Browserify
 
 ```
-$ browserify -t hbsfy src\app.js -o target\bundle.js
+$ browserify -t hbsfy src\app.js -o dist\bundle.js
 ```
 
 ### Dummy server
@@ -32,20 +32,20 @@ npm install connect --save-dev
 
 #### server.js
 
-Configure connect to serve static content from `target` on port `9091`.
+Configure connect to serve static content from `dist` on port `9091`.
 
 ```
 var connect = require('connect');
 
 connect.createServer(
-  connect.static('target')
+  connect.static('dist')
 ).listen(9091);
 ```
 
 ### index.html
 
-So the `bundle.js` is in `/target` directory from browserify.
-Add index.html in target that uses bundle.js.
+So the `bundle.js` is in `/dist` directory from browserify.
+Add index.html in dist that uses bundle.js.
 
 ```
 <!DOCTYPE html>
