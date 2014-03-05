@@ -94,9 +94,14 @@ These test still isn't enough. It's only half the tests (00:53) We still get int
 
 ### The other half (0:55:40) - Contract tests
 
+From C side,
+
+- Do I ask the right question
+- Can I handle the response
+
 From the other side (i.e. service side)...
 
-- Can S 
+- Can S handle the question
 - Does S respond that way, really...
 
 Test that verifies the 
