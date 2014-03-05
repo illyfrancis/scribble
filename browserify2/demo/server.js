@@ -1,5 +1,5 @@
 var connect = require('connect');
 
 connect.createServer(
-  connect.static('target')
+  connect.static('dist')
 ).listen(9091);
