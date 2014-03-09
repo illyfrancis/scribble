@@ -1,6 +1,6 @@
 var Backbone = require('backbone');
-// var template = require('./book.html');
-var template = require('./book.hbs');
+var template = require('./book.html');
+// var template = require('./book.hbs');
 
 var BookView = Backbone.View.extend({
 
