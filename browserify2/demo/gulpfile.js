@@ -20,6 +20,6 @@ gulp.task('scripts', function() {
       insertGlobals : true,
       debug : !gulp.env.production
     }))
-    .pipe(gulp.dest('./dist'));
+    .pipe(gulp.dest('./target'));
     // .pipe(gulp.dest('./build/js'))
 });
