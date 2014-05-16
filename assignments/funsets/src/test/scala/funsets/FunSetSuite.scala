@@ -177,14 +177,12 @@ class FunSetSuite extends FunSuite {
     new TestSets {
       val s = singletonSet(-999)
 
-      printSet(s)
-
       def id = (e: Int) => e == -999
       assert(exists(s, id), "exists -999")
     }
   }
 
-  test("map to double") {
+  test("map - add one") {
     new TestSets {
       val s0 = singletonSet(0)
       val s4 = singletonSet(4)
@@ -192,12 +190,8 @@ class FunSetSuite extends FunSuite {
       val s8 = singletonSet(8)
       val s = union(union(union(union(s0, s2), s4), s6), s8)
 
-      printSet(s)
-
       val t = map(s, e => e + 1)
 
-      printSet(t)
-      
       assert(!contains(t, 0), "Map 1")
       assert(contains(t, 1), "Map 2")
       assert(!contains(t, 2), "Map 3")
